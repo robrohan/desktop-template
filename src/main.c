@@ -80,17 +80,15 @@ int main(int argc, char **args)
                     }
                     else if (ev.mouse.type == fplMouseEventType_Button)
                     {
-                         input.mouseStates[(int)ev.mouse.mouseButton] = ev.mouse.buttonState;
+                        input.mouseStates[(int)ev.mouse.mouseButton] = ev.mouse.buttonState;
                     }
                     else if (ev.mouse.type == fplMouseEventType_Wheel)
                     {
                         input.mouseWheelDelta = ev.mouse.wheelDelta;
                         input.lastMouseWheelUpdateTime = fplMillisecondsQuery();
                     }
-                    printf("%d, %d :: %d %d %d\n", 
-                        (int)input.mousePos.x, (int)input.mousePos.y,
-                        input.mouseStates[0], input.mouseStates[1], input.mouseStates[2]
-                    );
+                    printf("%d, %d :: %d %d %d\n", (int)input.mousePos.x, (int)input.mousePos.y, input.mouseStates[0],
+                           input.mouseStates[1], input.mouseStates[2]);
                 }
                 break;
 
@@ -100,6 +98,11 @@ int main(int argc, char **args)
                         printf("%li\n", ev.keyboard.keyCode);
                     }
                 }
+                break;
+
+                case fplEventType_Window:
+                case fplEventType_Gamepad:
+                case fplEventType_None:
                 break;
                 }
             }

@@ -38,4 +38,6 @@ void wefx_clear_color(unsigned int red, unsigned int green, unsigned int blue);
 int wefx_xsize();
 int wefx_ysize();
 
+void wefx_draw(unsigned int *screen);
+
 #endif // WEFX__H
