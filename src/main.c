@@ -7,18 +7,15 @@ int main(int argc, char **args)
     fplSettings settings = fplMakeDefaultSettings();
 
     // Overwrite the video backend
-    settings.video.backend = fplVideoBackendType_OpenGL;
+    // settings.video.backend = fplVideoBackendType_OpenGL;
 
     // Legacy OpenGL
-    // settings.video.graphics.opengl.compabilityFlags =
-    // fplOpenGLCompabilityFlags_Legacy;
-
+    // settings.video.graphics.opengl.compabilityFlags = fplOpenGLCompabilityFlags_Legacy;
     // or
-
     // Modern OpenGL
-    settings.video.graphics.opengl.compabilityFlags = fplOpenGLCompabilityFlags_Core;
-    settings.video.graphics.opengl.majorVersion = 3;
-    settings.video.graphics.opengl.minorVersion = 3;
+    // settings.video.graphics.opengl.compabilityFlags = fplOpenGLCompabilityFlags_Core;
+    // settings.video.graphics.opengl.majorVersion = 3;
+    // settings.video.graphics.opengl.minorVersion = 3;
 
     if (fplPlatformInit(fplInitFlags_Video, &settings))
     {

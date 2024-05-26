@@ -5,15 +5,14 @@ APP=example
 PLATFORM=linux
 
 dummy:
-	@echo "Probably want: make init"
-	@echo "or maybe: make build"
+	@echo "Probably want: make build"
 
 clean:
 	rm -f ./libs/*.a
-	rm -f ./build
+	rm -rf ./build
 
 # Do the actual build
-build: libs
+build:
 	mkdir -p ./build/$(PLATFORM)
 	$(CC) -Wall -std=c99 \
 		src/main.c \
