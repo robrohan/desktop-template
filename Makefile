@@ -15,6 +15,8 @@ clean:
 build:
 	mkdir -p ./build/$(PLATFORM)
 	$(CC) -Wall -std=c99 \
+		vendor/wefx/wefx.c \
 		src/main.c \
 		-I./vendor/ \
+		-I./vendor/wefx \
 		-o build/$(PLATFORM)/$(APP) -lm
