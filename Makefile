@@ -4,6 +4,12 @@ CC=gcc
 APP=example
 PLATFORM=linux
 
+C_ERRS += -Wall -Wextra -Wpedantic \
+		-Wformat=2 -Wno-unused-parameter -Wshadow \
+		-Wwrite-strings -Wstrict-prototypes -Wold-style-definition \
+		-Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
+		-Wno-unused
+
 dummy:
 	@echo "Probably want: make build"
 
@@ -14,9 +20,9 @@ clean:
 # Do the actual build
 build:
 	mkdir -p ./build/$(PLATFORM)
-	$(CC) -Wall -std=c99 \
+	$(CC) $(C_ERRS) -std=c11 \
 		vendor/wefx/wefx.c \
 		src/main.c \
 		-I./vendor/ \
 		-I./vendor/wefx \
-		-o build/$(PLATFORM)/$(APP) -lm
+		-o build/$(PLATFORM)/$(APP) -lm -fopenmp

@@ -62,7 +62,7 @@ int main(int argc, char **args)
 
     if (fplPlatformInit(fplInitFlags_Video, &settings))
     {
-        struct InputState input = {};
+        struct InputState input = {0};
         int ticks = 0;
         while (fplWindowUpdate())
         {
