@@ -8,6 +8,7 @@ To start out, we import our _wefx.h_ header file. This file contains a few struc
 enumerations we will be using throughout this implementation file.
 
 */
+#include <stdlib.h>
 #include "wefx.h"
 /*
 
@@ -80,8 +81,8 @@ static int rgb_to_int(unsigned int red, unsigned int green, unsigned int blue)
     red = MIN(red, 255);
     green = MIN(green, 255);
     blue = MIN(blue, 255);
-    int color = (0xFF << 24) + (blue << 16) + (green << 8) + (red);
-    return color;
+    int c = (0xFF << 24) + (blue << 16) + (green << 8) + (red);
+    return c;
 }
 /*
 
@@ -142,7 +143,7 @@ This is often called at the top of the render loop to reset to a blank slate bef
 doing any drawing.
 
 */
-void wefx_clear()
+void wefx_clear(void)
 {
     for (int q = 0; q < w * h; q++)
         buffer[q] = bg_color;
@@ -237,10 +238,10 @@ what it considers to be the screen.
 ---
 
 */
-EXPORT void wefx_draw(unsigned int *screen)
+EXPORT void wefx_draw(unsigned int *iscreen)
 {
     for (int q = 0; q < w * h; q++)
-        screen[q] = buffer[q];
+        iscreen[q] = buffer[q];
 }
 /*
 
@@ -251,11 +252,11 @@ size to be. These methods are exposed to Javascript to get the X
 and Y dimensions of the buffer / screen.
 
 */
-EXPORT int wefx_xsize()
+EXPORT int wefx_xsize(void)
 {
     return w;
 }
-EXPORT int wefx_ysize()
+EXPORT int wefx_ysize(void)
 {
     return h;
 }
