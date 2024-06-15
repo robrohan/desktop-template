@@ -2,7 +2,7 @@
 
 CC=gcc
 APP=example
-PLATFORM=Linux
+PLATFORM:=Linux
 
 C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wformat=2 -Wno-unused-parameter -Wshadow \
