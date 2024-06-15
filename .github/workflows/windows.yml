@@ -71,24 +71,24 @@ jobs:
         matrix.compiler == 'mingw-w64' &&
         matrix.bits == 64
 
-    # - name: Generate Artifacts
-    #   run: |
-    #     copy /Y .\RGFW.h .\build\${{ env.RELEASE_NAME }}\include
-    #     xcopy .\deps .\build\${{ env.RELEASE_NAME }}\include /E /I /Y
-    #     copy /Y .\libRGFW.a .\build\${{ env.RELEASE_NAME }}\lib
-    #     copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
-    #     copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
-    #     cd build
-    #     7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
-    #     dir
-    #   shell: cmd
+    - name: Generate Artifacts
+      run: |
+        cd build
+        7z a ./${{ env.PLATFORM }}.zip ./${{ env.PLATFORM }}
+        dir
+      # copy /Y .\RGFW.h .\build\${{ env.RELEASE_NAME }}\include
+      # xcopy .\deps .\build\${{ env.RELEASE_NAME }}\include /E /I /Y
+      # copy /Y .\libRGFW.a .\build\${{ env.RELEASE_NAME }}\lib
+      # copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
+      # copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
+      shell: cmd
 
-    # - name: Upload Artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: ${{ env.RELEASE_NAME }}.zip
-    #     path: ./build/${{ env.RELEASE_NAME }}.zip
-        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PLATFORM }}.zip
+        path: ./build/${{ env.PLATFORM }}.zip
+
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:

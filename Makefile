@@ -1,7 +1,7 @@
 .PHONY: libs build
 
 CC=gcc
-APP=example
+APP:=example
 PLATFORM:=Linux
 
 C_ERRS += -Wall -Wextra -Wpedantic \
