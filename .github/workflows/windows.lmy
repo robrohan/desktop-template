@@ -5,9 +5,6 @@ on:
       branches:
         - main
 
-# permissions:
-#   contents: read
-
 jobs:
   build:
     permissions:
@@ -33,23 +30,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
-    
-    # - name: Setup Release Version
-    #   run: |
-    #     echo "RELEASE_NAME=RGFW-${{ github.event.release.tag_name }}_win${{ matrix.bits }}_${{ matrix.compiler }}" >> $GITHUB_ENV
-    #   shell: bash
-    #   if: github.event_name == 'release' && github.event.action == 'published'
-
-    # - name: Setup Environment
-    #   run: | 
-    #     dir
-    #     mkdir build
-    #     cd build
-    #     mkdir ${{ env.RELEASE_NAME }}
-    #     cd ${{ env.RELEASE_NAME }}
-    #     mkdir include
-    #     mkdir lib
-    #     cd ../../../RGFW
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
@@ -76,10 +56,6 @@ jobs:
         cd build
         7z a ./${{ env.PLATFORM }}.zip ./${{ env.PLATFORM }}
         dir
-      # copy /Y .\RGFW.h .\build\${{ env.RELEASE_NAME }}\include
-      # xcopy .\deps .\build\${{ env.RELEASE_NAME }}\include /E /I /Y
-      # copy /Y .\libRGFW.a .\build\${{ env.RELEASE_NAME }}\lib
-      # copy /Y .\README.md .\build\${{ env.RELEASE_NAME }}\README.md
       # copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
       shell: cmd
 
