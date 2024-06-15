@@ -10,8 +10,8 @@ C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
 		-Wno-unused
 
-DEBUG = -ggdb
-STATIC =
+DEBUG:=
+STATIC=
 # Windows mignw32 needs static
 ifeq ($(CC),x86_64-w64-mingw32-gcc)
 	STATIC = --static

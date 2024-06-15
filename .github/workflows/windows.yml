@@ -61,7 +61,7 @@ jobs:
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
         windres.exe --version
         dir C:\msys64\mingw64\bin
-        make build
+        make build PLATFORM=${{env.PLATFORM}}
       # rm -f RGFW.o 
       # make libRGFW.a
       # make libRGFW.dll

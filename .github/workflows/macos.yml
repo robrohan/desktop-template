@@ -44,8 +44,13 @@ jobs:
       run: |
         clang --version
 
-        make build CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
-        make build CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION"
+        make build \
+          CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" \
+          PLATFORM=${{env.PLATFORM}}
+        
+        make build \
+          CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" \
+          PLATFORM=${{env.PLATFORM}}
 
       # brew install grep
       # # Build x86_64 static
