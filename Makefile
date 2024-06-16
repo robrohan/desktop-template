@@ -11,6 +11,7 @@ C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wno-unused
 
 DEBUG:=
+EXT:=
 STATIC=
 # Windows mignw32 needs static
 ifeq ($(CC),x86_64-w64-mingw32-gcc)
@@ -24,7 +25,6 @@ ifeq ($(PLATFORM),Windows)
 		-lgdi32 \
 		-lopengl32 \
 		$(STATIC)
-	EXT = .exe
 endif
 ifeq ($(PLATFORM),Darwin)
 	LIBS := -lm \
@@ -33,7 +33,6 @@ ifeq ($(PLATFORM),Darwin)
 		-framework OpenGL \
 		-framework CoreVideo \
 		$(STATIC)
-	EXT = 
 endif
 ifeq ($(PLATFORM),Linux)
 	LIBS := -lXrandr \
@@ -43,7 +42,6 @@ ifeq ($(PLATFORM),Linux)
 		-ldl \
 		-lpthread \
 		$(STATIC)
-	EXT =
 endif
 
 dummy:

@@ -90,11 +90,11 @@ jobs:
 
         make build \
           CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" \
-          PLATFORM=${{env.PLATFORM}}
+          PLATFORM=${{env.PLATFORM}} EXT=.x86
         
         make build \
           CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" \
-          PLATFORM=${{env.PLATFORM}}
+          PLATFORM=${{env.PLATFORM}} EXT=.arm64
 
     - name: Generate Artifacts
       run: |
@@ -148,7 +148,7 @@ jobs:
         ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
         windres.exe --version
         dir C:\msys64\mingw64\bin
-        make build PLATFORM=${{env.PLATFORM}}
+        make build PLATFORM=${{env.PLATFORM}} EXT=.exe
       shell: cmd
       if: |
         matrix.compiler == 'mingw-w64' &&
