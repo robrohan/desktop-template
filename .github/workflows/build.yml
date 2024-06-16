@@ -24,7 +24,6 @@ jobs:
     env:
       APP: example
       PLATFORM: Linux
-    #   RELEASE_NAME: RGFW-dev_linux_${{ matrix.ARCH_NAME }}
     
     steps:
     - name: Checkout code
@@ -80,7 +79,6 @@ jobs:
     
     env:
       PLATFORM: Darwin
-      RELEASE_NAME: RGFW-dev_macos
     
     steps:
     - name: Checkout
@@ -137,7 +135,6 @@ jobs:
     env:
       PLATFORM: Windows
       GNUTARGET: default
-    # RELEASE_NAME: RGFW-dev_win${{ matrix.bits }}_${{ matrix.compiler }}
 
     steps:
     - name: Checkout
@@ -154,10 +151,6 @@ jobs:
         windres.exe --version
         dir C:\msys64\mingw64\bin
         make build PLATFORM=${{env.PLATFORM}}
-      # rm -f RGFW.o 
-      # make libRGFW.a
-      # make libRGFW.dll
-      # copy /Y .\libRGFW.dll .\build\${{ env.RELEASE_NAME }}\lib
       shell: cmd
       if: |
         matrix.compiler == 'mingw-w64' &&
