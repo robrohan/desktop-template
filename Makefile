@@ -58,9 +58,7 @@ clean:
 build:
 	mkdir -p ./build/$(PLATFORM)
 	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) $(DEBUG) -std=c99 \
-		vendor/wefx/wefx.c \
 		src/main.c \
 		-I./vendor/ \
-		-I./vendor/wefx \
 		-o build/$(PLATFORM)/$(APP)$(EXT) \
 		$(LIBS)

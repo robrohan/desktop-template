@@ -1306,7 +1306,7 @@ typedef struct { i32 x, y; } RGFW_vector;
 }
 
 	u8 RGFW_error = 0;
-	u8 RGFW_Error() { return RGFW_error; }
+	u8 RGFW_Error(void) { return RGFW_error; }
 
 #define SET_ATTRIB(a, v) { \
     assert(((size_t) index + 1) < sizeof(attribs) / sizeof(attribs[0])); \
