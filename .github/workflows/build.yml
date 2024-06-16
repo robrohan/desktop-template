@@ -67,10 +67,9 @@ jobs:
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:
-    #     files: ./build/${{ env.RELEASE_NAME }}.tar.gz
+    #     files: ./build/${{ env.PLATFORM }}.tar.gz
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   if: github.event_name == 'release' && github.event.action == 'published'
   
   darwin:
     permissions:
@@ -111,10 +110,9 @@ jobs:
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:
-    #     files: ./build/${{ env.RELEASE_NAME }}.tar.gz
+    #     files: ./build/${{ env.PLATFORM }}.tar.gz
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   if: github.event_name == 'release' && github.event.action == 'published'
 
   windows:
     permissions:
@@ -161,7 +159,6 @@ jobs:
         cd build
         7z a ./${{ env.PLATFORM }}.zip ./${{ env.PLATFORM }}
         dir
-      # copy /Y .\LICENSE .\build\${{ env.RELEASE_NAME }}\LICENSE
       shell: cmd
 
     - name: Upload Artifacts
@@ -173,7 +170,6 @@ jobs:
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:
-    #     files: ./build/${{ env.RELEASE_NAME }}.zip
+    #     files: ./build/${{ env.PLATFORM }}.zip
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   if: github.event_name == 'release' && github.event.action == 'published'

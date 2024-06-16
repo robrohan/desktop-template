@@ -46,12 +46,10 @@ ifeq ($(PLATFORM),Linux)
 	EXT =
 endif
 
-
 dummy:
-	@echo "Probably want: make build"
+	@echo "You probably want: make build"
 
 clean:
-	rm -f ./libs/*.a
 	rm -rf ./build
 
 # Do the actual build
@@ -62,3 +60,5 @@ build:
 		-I./vendor/ \
 		-o build/$(PLATFORM)/$(APP)$(EXT) \
 		$(LIBS)
+	cp ./LICENSE ./build/$(PLATFORM)/LICENSE
+
