@@ -1,6 +1,6 @@
 .PHONY: libs build
 
-CC=gcc
+CC:=gcc
 APP:=example
 PLATFORM:=Linux
 
@@ -10,9 +10,10 @@ C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
 		-Wno-unused
 
+STD:=c99
 DEBUG:=
 EXT:=
-STATIC=
+STATIC:=
 # Windows mignw32 needs static
 ifeq ($(CC),x86_64-w64-mingw32-gcc)
 	STATIC = --static
@@ -24,6 +25,7 @@ ifeq ($(PLATFORM),Windows)
 		-lwinmm \
 		-lgdi32 \
 		-lopengl32 \
+		-mwindows \
 		$(STATIC)
 endif
 ifeq ($(PLATFORM),Darwin)
@@ -41,6 +43,7 @@ ifeq ($(PLATFORM),Linux)
 		-lGL \
 		-ldl \
 		-lpthread \
+		-D_POSIX_C_SOURCE=200112L \
 		$(STATIC)
 endif
 
@@ -53,7 +56,7 @@ clean:
 # Do the actual build
 build:
 	mkdir -p ./build/$(PLATFORM)
-	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) $(DEBUG) -std=c99 \
+	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) $(DEBUG) -std=$(STD) \
 		src/main.c \
 		-I./vendor/ \
 		-o build/$(PLATFORM)/$(APP)$(EXT) \
