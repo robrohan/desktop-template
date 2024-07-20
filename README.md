@@ -1,5 +1,7 @@
 # Desktop Template
 
+![Build Status](https://github.com/robrohan/desktop-template/actions/workflows/build.yml/badge.svg)
+
 The most minimal, self contained, C99 based, cross platform (Linux, Windows, 
 MacOS) desktop application template I could find / put together.
 
