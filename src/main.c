@@ -50,9 +50,9 @@ void drawBitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
 
 void drawRect(RGFW_window *win, RGFW_rect r, u8 color[3])
 {
-    for (u32 x = r.x; x < (r.x + r.w); x++)
+    for (i32 x = r.x; x < (r.x + r.w); x++)
     {
-        for (u32 y = r.y; y < (r.y + r.h); y++)
+        for (i32 y = r.y; y < (r.y + r.h); y++)
         {
             int index = y * (4 * screenSize.w) + x * 4;
             memcpy(win->buffer + index, color, 4 * sizeof(u8));
@@ -62,7 +62,7 @@ void drawRect(RGFW_window *win, RGFW_rect r, u8 color[3])
 
 /////////////////////////////////////////////
 
-draw(RGFW_window *win, int ticks)
+void draw(RGFW_window *win, int ticks)
 {
     clear(win, (u8[4]){0xc0, 0xc0, 0xc0, 0xff});
 	drawRect(win, RGFW_RECT(100, 200, 200, 200), (u8[4]){0xff, 0, 0, 0xff});
