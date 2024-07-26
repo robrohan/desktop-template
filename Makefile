@@ -66,4 +66,3 @@ build:
 		-o build/$(PLATFORM)/$(APP)$(EXT) \
 		$(LIBS)
 	cp ./LICENSE ./build/$(PLATFORM)/LICENSE
-
