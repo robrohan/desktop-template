@@ -51,7 +51,7 @@ dummy:
 	@echo "You probably want: make build, or make fetch"
 
 fetch:
-	curl https://raw.githubusercontent.com/ColleagueRiley/RGFW/main/RGFW.h > ./vendor/RGFW.h
+	curl https://raw.githubusercontent.com/ColleagueRiley/RGFW/refs/heads/main/RGFW.h > ./vendor/RGFW.h
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
 
 clean:

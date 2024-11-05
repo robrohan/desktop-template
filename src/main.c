@@ -75,9 +75,8 @@ int main(void)
 {
     RGFW_window *win = RGFW_createWindow(
         "Example", 
-        RGFW_RECT(0, 0, 250, 300), 
+        RGFW_RECT(0, 0, 320, 240), 
         RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER);
-    win->fpsCap = 30;
 
     screenSize = RGFW_getScreenSize();
     printf("%dx%d\n", screenSize.w, screenSize.h);
