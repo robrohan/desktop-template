@@ -74,7 +74,7 @@ void draw(RGFW_window *win, int time)
     int x = time % W;
     wefx_point(x, (H / 2) + cos(time) * 2);
 
-    for (int i = 0; i < W/2; i++)
+    for (int i = 0; i < W/3; i++)
     {
         wefx_color(0xff, 0, 0);
         wefx_point(x - i, ((H / 2) + sin(time - i) * 3) - 20);
@@ -105,7 +105,7 @@ int main(void)
     RGFW_window *win = RGFW_createWindow(
         "Example", 
         RGFW_RECT(0, 0, W, H), 
-        RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER);
+        RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER | RGFW_NO_RESIZE);
 
     screenSize = RGFW_getScreenSize();
     printf("%dx%d\n", screenSize.w, screenSize.h);
