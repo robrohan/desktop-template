@@ -111,6 +111,26 @@ void wefx_point(int x, int y)
     buffer[offset] = fg_color;
 }
 /*
+## Draw a Pixel
+
+This function draw's a pixel to the screen. This is similar to "point" but can
+have an arbitrary size. This is useful for stylized rendering. For example if
+you want a more chucky rendering, you can use a 4x4 pixel size
+
+*/
+void wefx_pixel(int left, int top, int psize)
+{
+    top = top + psize;
+    for (int r = 0; r <= psize; r++)
+    {
+        for (int c = 0; c <= psize; c++)
+        {
+            wefx_point(left + r, top - c);
+        }
+    }
+}
+
+/*
 
 ## Set the Background Color - wefx_clear_color
 
@@ -147,7 +167,7 @@ Here we define a simple function to draw a line. It will draw from (x1,y1) to (x
 using Bresenham's line algorithm and the currently set foreground color [@BresenhamLineAlgorithm_2022_].
 
 */
-void wefx_line(int x0, int y0, int x1, int y1)
+void wefx_line(int x0, int y0, int x1, int y1, int psize)
 {
     int dx = abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
@@ -157,7 +177,7 @@ void wefx_line(int x0, int y0, int x1, int y1)
 
     for (;;)
     {
-        wefx_point(x0, y0);
+        wefx_pixel(x0, y0, psize);
         if (x0 == x1 && y0 == y1)
             break;
         int e2 = 2 * error;
@@ -177,6 +197,15 @@ void wefx_line(int x0, int y0, int x1, int y1)
         }
     }
 }
+
+void wefx_rect(int x0, int y0, int x1, int y1, int psize)
+{
+    wefx_line(x0, y0, x0, y1, psize);
+    wefx_line(x0, y1, x1, y1, psize);
+    wefx_line(x1, y1, x1, y0, psize);
+    wefx_line(x1, y0, x0, y0, psize);
+}
+
 /*
 
 ## Draw a Circle - wefx_circle
@@ -185,22 +214,32 @@ This function can be called to draw a circle. It also uses the
 currently set foreground color. It uses the Midpoint Circle Algorithm [@MidpointCircleAlgorithm_2022_].
 
 */
-void wefx_circle(int x0, int y0, int r0)
+void wefx_circle(int x0, int y0, int r0, int psize)
 {
     int x = r0;
     int y = 0;
     int err = 0;
     while (x >= y)
     {
-        wefx_point(x0 + x, y0 + y);
+        // wefx_point(x0 + x, y0 + y);
 
-        wefx_point(x0 + y, y0 + x);
-        wefx_point(x0 - y, y0 + x);
-        wefx_point(x0 - x, y0 + y);
-        wefx_point(x0 - x, y0 - y);
-        wefx_point(x0 - y, y0 - x);
-        wefx_point(x0 + y, y0 - x);
-        wefx_point(x0 + x, y0 - y);
+        // wefx_point(x0 + y, y0 + x);
+        // wefx_point(x0 - y, y0 + x);
+        // wefx_point(x0 - x, y0 + y);
+        // wefx_point(x0 - x, y0 - y);
+        // wefx_point(x0 - y, y0 - x);
+        // wefx_point(x0 + y, y0 - x);
+        // wefx_point(x0 + x, y0 - y);
+
+        wefx_pixel(x0 + x, y0 + y, psize);
+
+        wefx_pixel(x0 + y, y0 + x, psize);
+        wefx_pixel(x0 - y, y0 + x, psize);
+        wefx_pixel(x0 - x, y0 + y, psize);
+        wefx_pixel(x0 - x, y0 - y, psize);
+        wefx_pixel(x0 - y, y0 - x, psize);
+        wefx_pixel(x0 + y, y0 - x, psize);
+        wefx_pixel(x0 + x, y0 - y, psize);
 
         y += 1;
         err += 2 * y + 1;

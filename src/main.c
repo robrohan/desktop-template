@@ -3,48 +3,14 @@
 #include "RGFW.h"
 
 #include "wefx.h"
+#include "3d.h"
 
 #define W 320
 #define H 240
 
-// u8 icon[4 * 3 * 3] = {0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF,
-//                       0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
-//                       0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF};
-
 RGFW_area screenSize;
 
-// // fill buffer with a color, clearing anything that was on it
-// void clear(RGFW_window *win, u8 color[3])
-// {
-//     // loop through each pixel
-//     for (u32 y = 0; y < (u32)win->r.h; y++)
-//     {
-//         for (u32 x = 0; x < screenSize.w; x++)
-//         {
-//             u32 index = (y * 4 * screenSize.w) + x * 4;
-//             // copy the color to that pixel
-//             memcpy(win->buffer + index, color, 4 * sizeof(u8));
-//         }
-//     }
-// }
-
-// // this can also be used to convert BGR to RGB
-// void bitmap_rgbToBgr(u8 *bitmap, RGFW_area a)
-// {
-//     // loop through each *pixel* (not channel) of the buffer
-//     for (u32 y = 0; y < a.h; y++)
-//     {
-//         for (u32 x = 0; x < a.w; x++)
-//         {
-//             u32 index = (y * 4 * a.w) + x * 4;
-//             u8 red = bitmap[index];
-//             bitmap[index] = bitmap[index + 2];
-//             bitmap[index + 2] = red;
-//         }
-//     }
-// }
-
-void drawBitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
+void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
 {
     for (u32 y = 0; y < (u32)rect.h; y++)
     {
@@ -53,49 +19,9 @@ void drawBitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
     }
 }
 
-// void drawRect(RGFW_window *win, RGFW_rect r, u8 color[3])
-// {
-//     for (i32 x = r.x; x < (r.x + r.w); x++)
-//     {
-//         for (i32 y = r.y; y < (r.y + r.h); y++)
-//         {
-//             int index = y * (4 * screenSize.w) + x * 4;
-//             memcpy(win->buffer + index, color, 4 * sizeof(u8));
-//         }
-//     }
-// }
-
-/////////////////////////////////////////////
-
-void draw(RGFW_window *win, int time)
+void draw(int time)
 {
-    wefx_clear();
-
-    int x = time % W;
-    wefx_point(x, (H / 2) + cos(time) * 2);
-
-    for (int i = 0; i < W/3; i++)
-    {
-        wefx_color(0xff, 0, 0);
-        wefx_point(x - i, ((H / 2) + sin(time - i) * 3) - 20);
-
-        wefx_color(0, 0xff, 0);
-        wefx_point(x - i, (H / 2) + cos(time - i) * 2);
-
-        wefx_color(0, 0, 0xff);
-        wefx_point(x - i, ((H / 2) + sin(time - i) * 3) + 20);
-    }
-
-    wefx_color(0xff, 0xff, 0xff);
-    wefx_line(0, 0, W, H);
-    wefx_line(0, H, W, 0);
-
-    wefx_color(rand() % 0xff, rand() % 0xff, rand() & 0xff);
-    wefx_line(W / 2, H / 2, abs(rand() % W), abs(rand() % H));
-
-    wefx_circle(W >> 1, H >> 1, (H >> 1) - 5);
-
-    drawBitmap(win, wefx_get_buffer(), RGFW_RECT(0, 0, W, H));
+    draw_scene(time, W, H);
 }
 
 /////////////////////////////////////////////
@@ -103,16 +29,16 @@ void draw(RGFW_window *win, int time)
 int main(void)
 {
     RGFW_window *win = RGFW_createWindow(
-        "Example", 
-        RGFW_RECT(0, 0, W, H), 
-        RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER | RGFW_NO_RESIZE);
+        "Desktop Example",
+        RGFW_RECT(0, 0, W, H),
+        RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER); // | RGFW_NO_RESIZE);
 
     screenSize = RGFW_getScreenSize();
     printf("%dx%d\n", screenSize.w, screenSize.h);
     printf("%dx%d\n", win->r.w, win->r.h);
 
     /////
-    int err = wefx_open(win->r.w, win->r.h, "Test Window");
+    int err = wefx_open(win->r.w, win->r.h, "Desktop Example");
     if (err)
         return 1;
     wefx_clear_color(0x00, 0x00, 0x00);
@@ -163,10 +89,11 @@ int main(void)
         }
 
         // render
-        draw(win, ticks);
+        draw(ticks);
         RGFW_window_setGPURender(win, 0);
         RGFW_window_swapBuffers(win);
-
+        
+        draw_bitmap(win, (u8 *)wefx_get_buffer(), RGFW_RECT(0, 0, W, H));
         ticks++;
     }
 

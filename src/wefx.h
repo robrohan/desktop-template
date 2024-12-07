@@ -26,10 +26,14 @@ int wefx_open(unsigned int width, unsigned int height, const char *title);
 // Draw a point at (x,y)
 void wefx_point(int x, int y);
 
-void wefx_circle(int x0, int y0, int r0);
+void wefx_pixel(int left, int top, int psize);
+
+void wefx_circle(int x0, int y0, int r0, int psize);
 
 // Draw a line from (x1,y1) to (x2,y2)
-void wefx_line(int x1, int y1, int x2, int y2);
+void wefx_line(int x1, int y1, int x2, int y2, int psize);
+
+void wefx_rect(int x0, int y0, int x1, int y1, int psize);
 
 // Change the current drawing color.
 void wefx_color(unsigned int red, unsigned int green, unsigned int blue);
