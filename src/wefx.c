@@ -86,8 +86,14 @@ Subsequent calls to draw will use this color until it is changed.
 */
 void wefx_color(unsigned int red, unsigned int green, unsigned int blue)
 {
-    fg_color = rgb_to_int(red, green, blue);
+    wefx_color_i(rgb_to_int(red, green, blue));
 }
+
+void wefx_color_i(int color) 
+{
+    fg_color = color;
+}
+
 /*
 
 ## Draw a Single Point - wefx_point
@@ -221,16 +227,6 @@ void wefx_circle(int x0, int y0, int r0, int psize)
     int err = 0;
     while (x >= y)
     {
-        // wefx_point(x0 + x, y0 + y);
-
-        // wefx_point(x0 + y, y0 + x);
-        // wefx_point(x0 - y, y0 + x);
-        // wefx_point(x0 - x, y0 + y);
-        // wefx_point(x0 - x, y0 - y);
-        // wefx_point(x0 - y, y0 - x);
-        // wefx_point(x0 + y, y0 - x);
-        // wefx_point(x0 + x, y0 - y);
-
         wefx_pixel(x0 + x, y0 + y, psize);
 
         wefx_pixel(x0 + y, y0 + x, psize);

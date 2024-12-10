@@ -57,6 +57,11 @@ fetch:
 clean:
 	rm -rf ./build
 
+convert:
+	convert -resize 512x512 \
+		./assets/a.jpeg \
+		./assets/debug-diffuse-512.png
+
 # Do the actual build
 build:
 	mkdir -p ./build/$(PLATFORM)

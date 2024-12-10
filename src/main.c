@@ -5,6 +5,10 @@
 #include "wefx.h"
 #include "3d.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#include "stb_image.h"
+
 #define W 320
 #define H 240
 
@@ -19,9 +23,9 @@ void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
     }
 }
 
-void draw(int time)
+void draw(int time, ui8* image)
 {
-    draw_scene(time, W, H);
+    draw_scene(time, W, H, image);
 }
 
 /////////////////////////////////////////////
@@ -44,6 +48,17 @@ int main(void)
     wefx_clear_color(0x00, 0x00, 0x00);
     wefx_clear();
     srand(9999991);
+    /////
+
+
+    /////
+    int w = 0;
+    int h = 0;
+    int channels = 0;
+    ui8* image = stbi_load("./assets/debug-diffuse.png", &w, &h, &channels, STBI_rgb);
+    printf("%dx%d %d\n", w, h, channels);
+    printf("%x %x %x %x\n", image[0], image[1], image[2], image[3]);
+    printf("%x %x %x %x\n", image[4], image[5], image[6], image[7]);
     /////
 
     i8 running = 1;
@@ -89,7 +104,7 @@ int main(void)
         }
 
         // render
-        draw(ticks);
+        draw(ticks, image);
         RGFW_window_setGPURender(win, 0);
         RGFW_window_swapBuffers(win);
         
@@ -97,5 +112,6 @@ int main(void)
         ticks++;
     }
 
+    free(image);
     RGFW_window_close(win);
 }

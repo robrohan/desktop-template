@@ -38,6 +38,8 @@ void wefx_rect(int x0, int y0, int x1, int y1, int psize);
 // Change the current drawing color.
 void wefx_color(unsigned int red, unsigned int green, unsigned int blue);
 
+void wefx_color_i(int color);
+
 // Clear the graphics window to the background color.
 void wefx_clear(void);
 
