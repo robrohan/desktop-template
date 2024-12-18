@@ -58,9 +58,9 @@ clean:
 	rm -rf ./build
 
 convert:
-	convert -resize 512x512 \
-		./assets/a.jpeg \
-		./assets/debug-diffuse-512.png
+	convert -resize 8x8 \
+		./assets/a.png \
+		./assets/8x8_2.png
 
 # Do the actual build
 build:

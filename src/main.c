@@ -55,10 +55,10 @@ int main(void)
     int w = 0;
     int h = 0;
     int channels = 0;
-    ui8* image = stbi_load("./assets/debug-diffuse.png", &w, &h, &channels, STBI_rgb);
+    ui8* image = stbi_load("./assets/8x8.png", &w, &h, &channels, STBI_rgb);
     printf("%dx%d %d\n", w, h, channels);
-    printf("%x %x %x %x\n", image[0], image[1], image[2], image[3]);
-    printf("%x %x %x %x\n", image[4], image[5], image[6], image[7]);
+    printf("%x %x %x\n", image[0], image[1], image[2]);
+    printf("%x %x %x\n", image[3], image[4], image[5]);
     /////
 
     i8 running = 1;

@@ -5,15 +5,9 @@
     * https://jtsorlinis.github.io/rendering-tutorial/
  */
 #include "3d.h"
+#include "r2_maths.h"
 
 #define PIXEL_SIZE 1
-
-
-i32 edge_cross(vector *a, vector *b, vector *c)
-{
-    return (b->x - a->x) * (c->y - a->y) - (b->y - a->y) * (c->x - a->x);
-};
-
 
 /* Are we looking at a triangle like:
     B    C
@@ -24,9 +18,9 @@ i32 edge_cross(vector *a, vector *b, vector *c)
        A
   (to prevent edge overdraw)
 */
-i8 is_top_left(vector *s, vector *e)
+i8 is_top_left(vec2 *s, vec2 *e)
 {
-    vector edge = { e->x - s->x, e->y - s->y};
+    vec2 edge = { e->x - s->x, e->y - s->y};
     return (edge.y == 0 && edge.x > 0) || edge.y > 0;
 }
 
@@ -42,21 +36,21 @@ void triangle_fill(vertex A, vertex B, vertex C, ui8* image)
 {
     // Calculate the edge function for the whole triangle (ABC)
     // pointing towards the center basically
-    i32 ABC = -1 * edge_cross(&A.vec, &B.vec, &C.vec);
+    f32 ABC = -1 * vec2_edge_cross(&A.vec, &B.vec, &C.vec);
     if(ABC < 0) {
          return;
     }
 
     // This will squeeze everything towards the center of the triangle a bit 
     // if it has a left/top bias - which will help with overlapping overdraw
-    i32 bias0 = is_top_left(&A.vec, &B.vec) ? 0 : -1;
-    i32 bias1 = is_top_left(&B.vec, &C.vec) ? 0 : -1;
-    i32 bias2 = is_top_left(&C.vec, &A.vec) ? 0 : -1;
+    f32 bias0 = is_top_left(&A.vec, &B.vec) ? 0 : -1;
+    f32 bias1 = is_top_left(&B.vec, &C.vec) ? 0 : -1;
+    f32 bias2 = is_top_left(&C.vec, &A.vec) ? 0 : -1;
 
-    i32 minX = MIN(MIN(A.vec.x, B.vec.x), C.vec.x);
-    i32 minY = MIN(MIN(A.vec.y, B.vec.y), C.vec.y);
-    i32 maxX = MAX(MAX(A.vec.x, B.vec.x), C.vec.x);
-    i32 maxY = MAX(MAX(A.vec.y, B.vec.y), C.vec.y);
+    f32 minX = MIN(MIN(A.vec.x, B.vec.x), C.vec.x);
+    f32 minY = MIN(MIN(A.vec.y, B.vec.y), C.vec.y);
+    f32 maxX = MAX(MAX(A.vec.x, B.vec.x), C.vec.x);
+    f32 maxY = MAX(MAX(A.vec.y, B.vec.y), C.vec.y);
 
 #ifdef DEBUG_BOX_TRIANGLE
     wefx_color(0xff, 0xff, 0xff);
@@ -68,53 +62,50 @@ void triangle_fill(vertex A, vertex B, vertex C, ui8* image)
     {
         for (SP.vec.x = minX; SP.vec.x < maxX; SP.vec.x+=PIXEL_SIZE)
         {
-            i32 AB_P = edge_cross(&A.vec, &B.vec, &SP.vec) + bias0;
-            i32 BC_P = edge_cross(&B.vec, &C.vec, &SP.vec) + bias1;
-            i32 CA_P = edge_cross(&C.vec, &A.vec, &SP.vec) + bias2;
+            f32 AB_P = vec2_edge_cross(&A.vec, &B.vec, &SP.vec) + bias0;
+            f32 BC_P = vec2_edge_cross(&B.vec, &C.vec, &SP.vec) + bias1;
+            f32 CA_P = vec2_edge_cross(&C.vec, &A.vec, &SP.vec) + bias2;
             
             // Our graphics system has 0,0 on the bottom left not the
             // top right
-            if (AB_P <= 0 && BC_P <= 0 && CA_P <= 0)
+            if (AB_P < 0 && BC_P < 0 && CA_P < 0)
             {
                 // Normalise the edge functions by dividing by the total 
                 // area to get the barycentric coordinates. The weights used
                 // to interplate the points in the triangle
-                // printf("%d %d %d\n", AB_P, BC_P, CA_P);
-                f32 wA = ((BC_P *100) / ABC); // alpha
-                f32 wB = ((CA_P *100) / ABC); // beta
-                f32 wG = ((AB_P *100) / ABC); // gamma
-                // printf("%d %d %d\n", wA, wB, wC);
-
-                f32 x_img = ((wA * A.u) + (wB * B.u) + (wG * C.u))/100;
-                f32 y_img = ((wA * A.v) + (wB * B.v) + (wG * C.v))/100;
-
-                // printf("%f --> %f %f\n", wA+wB+wG, x_img, y_img);
+                // f32 wA = ((BC_P * 100) / ABC); // alpha
+                // f32 wB = ((CA_P * 100) / ABC); // beta
+                // f32 wG = ((AB_P * 100) / ABC); // gamma
+                f32 wA = (BC_P / ABC); // alpha
+                f32 wB = (CA_P / ABC); // beta
+                f32 wG = (AB_P / ABC); // gamma
+                // printf("%f %f %f\n", wA, wB, wG);
 
 #ifdef DEBUG_UV_TRIANGLE
                 ui8 r = (255.0 * wA) + (000.0 * wB) + (000.0 * wG);
                 ui8 g = (000.0 * wA) + (255.0 * wB) + (000.0 * wG);
                 ui8 b = (000.0 * wA) + (000.0 * wB) + (255.0 * wG);
+                // printf("%x %x %x\n", r, g, b);
                 wefx_color(r, g, b);
 #else
-                // ui8 r = image[10];
-                // ui8 g = image[11];
-                // ui8 b = image[12];
-                // printf("%x %x %x\n", r, g, b);
+                f32 x_img = ((A.u * wA) + (B.u * wB) + (C.u * wG)); // / 100;
+                f32 y_img = ((A.v * wA) + (B.v * wB) + (C.v * wG)); // / 100;
+                // printf("%f --> %f %f\n", wA+wB+wG, x_img, y_img);
 
-                // i16 pixx = (x_img * 128) -.5;
-                // i16 pixy = ((1-y_img) * 128) -.5;
-
-                i16 pixx = -(x_img * 128) -.5;
-                i16 pixy = -(y_img * 128) -.5;
-
+                ui32 pixx = (x_img * 8) -.5;
+                ui32 pixy = (y_img * 8) -.5;
                 // printf("%d %d\n", pixx, pixy);
 
-                ui8 r = image[pixx+(128*pixy)+0];
-                ui8 g = image[pixx+(128*pixy)+1];
-                ui8 b = image[pixx+(128*pixy)+2];
+                i32 pix = pixx*pixy*3;
+                ui8 r = image[pix+0];
+                ui8 g = image[pix+1];
+                ui8 b = image[pix+2];
                 wefx_color(r, g, b);
-#endif
 
+                // i32 c = image[pix];
+                // // // printf("%x\n", c);
+                // wefx_color_i(c);
+#endif
                 wefx_pixel(SP.vec.x, SP.vec.y, PIXEL_SIZE);
             }
         }
@@ -131,19 +122,19 @@ void draw_scene(i32 time, i32 W, i32 H, ui8* image)
 
     vertex tri[3];
     tri[0] = (vertex){ {100, 10}, 0, 0};
-    tri[1] = (vertex){ {W >> 1, abs( (H) * (sin(time * .01)))}, .5, 0 };
-    tri[2] = (vertex){ {W - 100, 10}, 0, .5};
+    tri[1] = (vertex){ {W >> 1, abs( (H) * (sin(time * .01)))}, 1, 0 };
+    tri[2] = (vertex){ {W - 100, 10}, 0, 1};
 
     // tri[3] = (vertex){ {W - 100, H-10}, 32, 128 };
     // tri[4] = (vertex){ {W - 10, H-50}, 128, 64 };
 
     f32 angle = time * .01;
-    vector center = {W>>1, H>>1};
+    vec2 center = {W>>1, H>>1};
     // printf("%d\n", angle);
 
-    vertex v0 = {rotate_vec(tri[0].vec, center, angle), 0, 0};
-    vertex v1 = {rotate_vec(tri[1].vec, center, angle), 1, 0};
-    vertex v2 = {rotate_vec(tri[2].vec, center, angle), 0, 1};
+    vertex v0 = {rotate_vec(tri[0].vec, center, angle), 1, 1};
+    vertex v1 = {rotate_vec(tri[1].vec, center, angle), 0, 1};
+    vertex v2 = {rotate_vec(tri[2].vec, center, angle), 1, 0};
 
     wefx_clear();
 
@@ -158,9 +149,9 @@ void draw_scene(i32 time, i32 W, i32 H, ui8* image)
 }
 
 
-vector rotate_vec(vector v, vector c, f32 angle) 
+vec2 rotate_vec(vec2 v, vec2 c, f32 angle) 
 {
-    vector rot;
+    vec2 rot = {0};
     v.x -= c.x;
     v.y -= c.y;
 
@@ -196,16 +187,3 @@ mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar)
     return out;
 }
 
-char *mat4_tos(const mat4 *m)
-{
-    char *out = calloc(sizeof(char), 300);
-    // clang-format off
-    snprintf(out, 300, "[\n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n]\n", 
-        m->m00, m->m10, m->m20, m->m30,
-        m->m01, m->m11, m->m21, m->m31,
-        m->m02, m->m12, m->m22, m->m32,
-        m->m03, m->m13, m->m23, m->m33
-    );
-    // clang-format on
-    return out;
-}

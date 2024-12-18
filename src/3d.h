@@ -5,6 +5,9 @@
 #include <math.h>
 #include "wefx.h"
 
+#define R2_MATHS_IMPLEMENTATION
+#include "r2_maths.h"
+
 #ifndef EPSILON
 #define EPSILON 0.000000954
 #endif
@@ -31,46 +34,16 @@ typedef uint8_t ui8;
 typedef float f32;
 // typedef unsigned char ui8
 
-typedef struct vector
-{
-    i32 x, y;
-} vector;
-
 typedef struct vertex
 {
-    vector vec;
+    vec2 vec;
     f32 u,v;
 } vertex;
 
 
-/**
- * 4x4 Matrix backed by a flat array.
- * Access the array with ->a_mat4 or use the format:
- *   m<row><col>
- * where row and column are zero based
- *
- * e.g. m4->m22 for the 3rd row, 3rd column value
- * m4->a_mat4 for the array with values in order
- */
-typedef union u_mat4 {
-    f32 a_mat4[16];
-    struct
-    {
-        // clang-format off
-        f32 m00; f32 m10; f32 m20; f32 m30; // 16
-        f32 m01; f32 m11; f32 m21; f32 m31; // 16
-        f32 m02; f32 m12; f32 m22; f32 m32; // 16
-        f32 m03; f32 m13; f32 m23; f32 m33; // 16 -- 64
-        // clang-format on
-    };
-} mat4;
-
-
-vector rotate_vec(vector v, vector c, f32 angle);
+vec2 rotate_vec(vec2 v, vec2 c, f32 angle);
 
 mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar);
-
-char *mat4_tos(const mat4 *m);
 
 void draw_scene(i32 time, i32 W, i32 H, ui8* image);
 
