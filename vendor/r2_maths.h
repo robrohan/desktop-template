@@ -380,7 +380,7 @@ extern "C"
     static float vec2_edge_cross(const vec2 *a, const vec2 *b, const vec2 *c)
     {
         return (b->x - a->x) * (c->y - a->y) - (b->y - a->y) * (c->x - a->x);
-    };
+    }
 
     static void vec2_to_array(const vec2 *v, float *out)
     {
@@ -888,19 +888,19 @@ extern "C"
 // #endif
     }
 
-    static void mat4_perspective(float fov, float aspect, float near, float far, mat4 *out)
+    static void mat4_perspective(float fov, float aspect, float znear, float zfar, mat4 *out)
     {
-        /***
-         *   ⌈ n/r       0         0           0     ⌉
+        /**
+         *   | n/r       0         0           0     |
          *   | 0        n/t        0           0     |
          *   | 0         0    -(f+n)/f-n    -2fn/f-n |
-         *   ⌊ 0         0        -1           0     ⌋
+         *   | 0         0        -1           0     |
          */
-        float range = tan(fov / 2) * near;
-        float Sx = (2 * near) / (range * aspect + range * aspect);
-        float Sy = near / range;
-        float Sz = -(far + near) / (far - near);
-        float Pz = -(2 * far * near) / (far - near);
+        float range = tanf(fov / 2) * znear;
+        float Sx = (2 * znear) / (range * aspect + range * aspect);
+        float Sy = znear / range;
+        float Sz = -(zfar + znear) / (zfar - znear);
+        float Pz = -(2 * zfar * znear) / (zfar - znear);
 
         // clang-format off
         out->m00 = Sx; out->m10 = 0;  out->m20 = 0;  out->m30 = 0;
