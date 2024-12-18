@@ -1074,7 +1074,7 @@ extern "C"
             }
 // Loop over the columns to use when multiplying
 // against the row loaded above
-#pragma omp simd collapse(2)
+// #pragma omp simd collapse(2)
             for (j = 0; j < c2; j++)
             {
                 for (c = 0; c < r2; c++)
