@@ -845,7 +845,7 @@ extern "C"
 
     static void mat4_mul(const mat4 *m1, const mat4 *m2, mat4 *out)
     {
-#if !R2_MAT_MUL_LUDICROUS_SPEED
+#if R2_MAT_MUL_LUDICROUS_SPEED == 0
         mat_mul(m1->a_mat4, m2->a_mat4, 4, 4, 4, 4, out->a_mat4);
 #else
         // unrolling the loops makes this function faster
@@ -994,7 +994,7 @@ extern "C"
     // Multiply two 3x3 matrix output to out
     static void mat3_mul(const mat3 *m1, const mat3 *m2, mat3 *out)
     {
-#if !R2_MAT_MUL_LUDICROUS_SPEED
+#if R2_MAT_MUL_LUDICROUS_SPEED == 0
         mat_mul(m1->a_mat3, m2->a_mat3, 3, 3, 3, 3, out->a_mat3);
 #else
         // unrolling the loops makes this function faster
