@@ -845,47 +845,47 @@ extern "C"
 
     static void mat4_mul(const mat4 *m1, const mat4 *m2, mat4 *out)
     {
-#if R2_MAT_MUL_LUDICROUS_SPEED == 0
+// #if R2_MAT_MUL_LUDICROUS_SPEED == 0
         mat_mul(m1->a_mat4, m2->a_mat4, 4, 4, 4, 4, out->a_mat4);
-#else
-        // unrolling the loops makes this function faster
-        // so if you're keen you can use the -funroll-loops gcc flag.
-        //
-        //  10 runs of 10000 multiplies (average time in seconds):
-        //  -funroll-all-loops  -funroll-loops   looping
-        //  0.0018666           0.0018094        0.0019127
-        unsigned char i, j;
-        float row[4];
-        float col[4];
+// #else
+//         // unrolling the loops makes this function faster
+//         // so if you're keen you can use the -funroll-loops gcc flag.
+//         //
+//         //  10 runs of 10000 multiplies (average time in seconds):
+//         //  -funroll-all-loops  -funroll-loops   looping
+//         //  0.0018666           0.0018094        0.0019127
+//         unsigned char i, j;
+//         float row[4];
+//         float col[4];
 
-        // #pragma omp parallel for simd collapse(2)
-#pragma omp simd collapse(2)
-        for (i = 0; i < 16; i += 4)
-        {
-            for (j = 0; j < 4; j++)
-            {
-                // Row
-                row[0] = m1->a_mat4[i + 0];
-                row[1] = m1->a_mat4[i + 1];
-                row[2] = m1->a_mat4[i + 2];
-                row[3] = m1->a_mat4[i + 3];
+//         // #pragma omp parallel for simd collapse(2)
+// #pragma omp simd collapse(2)
+//         for (i = 0; i < 16; i += 4)
+//         {
+//             for (j = 0; j < 4; j++)
+//             {
+//                 // Row
+//                 row[0] = m1->a_mat4[i + 0];
+//                 row[1] = m1->a_mat4[i + 1];
+//                 row[2] = m1->a_mat4[i + 2];
+//                 row[3] = m1->a_mat4[i + 3];
 
-                // Column
-                col[0] = m2->a_mat4[j + 0];
-                col[1] = m2->a_mat4[j + 4];
-                col[2] = m2->a_mat4[j + 8];
-                col[3] = m2->a_mat4[j + 12];
+//                 // Column
+//                 col[0] = m2->a_mat4[j + 0];
+//                 col[1] = m2->a_mat4[j + 4];
+//                 col[2] = m2->a_mat4[j + 8];
+//                 col[3] = m2->a_mat4[j + 12];
 
-                // clang-format off
-                out->a_mat4[i + j] =
-                   row[0] * col[0] +
-                   row[1] * col[1] +
-                   row[2] * col[2] +
-                   row[3] * col[3];
-                // clang-format on
-            }
-        }
-#endif
+//                 // clang-format off
+//                 out->a_mat4[i + j] =
+//                    row[0] * col[0] +
+//                    row[1] * col[1] +
+//                    row[2] * col[2] +
+//                    row[3] * col[3];
+//                 // clang-format on
+//             }
+//         }
+// #endif
     }
 
     static void mat4_perspective(float fov, float aspect, float near, float far, mat4 *out)
@@ -994,45 +994,45 @@ extern "C"
     // Multiply two 3x3 matrix output to out
     static void mat3_mul(const mat3 *m1, const mat3 *m2, mat3 *out)
     {
-#if R2_MAT_MUL_LUDICROUS_SPEED == 0
+// #if R2_MAT_MUL_LUDICROUS_SPEED == 0
         mat_mul(m1->a_mat3, m2->a_mat3, 3, 3, 3, 3, out->a_mat3);
-#else
-        // unrolling the loops makes this function faster
-        // so if you're keen you can use the -funroll-loops gcc flag.
-        // I am too lazy to unroll this by hand at the moment; PRs welcome
-        //
-        //  10 runs of 10000 multiplies (average time in seconds):
-        //  -funroll-all-loops  -funroll-loops   looping
-        //  0.0018666           0.0018094        0.0019127
-        unsigned char i, j;
-        float row[4];
-        float col[4];
+// #else
+//         // unrolling the loops makes this function faster
+//         // so if you're keen you can use the -funroll-loops gcc flag.
+//         // I am too lazy to unroll this by hand at the moment; PRs welcome
+//         //
+//         //  10 runs of 10000 multiplies (average time in seconds):
+//         //  -funroll-all-loops  -funroll-loops   looping
+//         //  0.0018666           0.0018094        0.0019127
+//         unsigned char i, j;
+//         float row[4];
+//         float col[4];
 
-// #pragma omp parallel for simd collapse(2)
-#pragma omp simd collapse(2)
-        for (i = 0; i < 9; i += 3)
-        {
-            for (j = 0; j < 3; j++)
-            {
-                // Row
-                row[0] = m1->a_mat3[i + 0];
-                row[1] = m1->a_mat3[i + 1];
-                row[2] = m1->a_mat3[i + 2];
+// // #pragma omp parallel for simd collapse(2)
+// #pragma omp simd collapse(2)
+//         for (i = 0; i < 9; i += 3)
+//         {
+//             for (j = 0; j < 3; j++)
+//             {
+//                 // Row
+//                 row[0] = m1->a_mat3[i + 0];
+//                 row[1] = m1->a_mat3[i + 1];
+//                 row[2] = m1->a_mat3[i + 2];
 
-                // Column
-                col[0] = m2->a_mat3[j + 0];
-                col[1] = m2->a_mat3[j + 3];
-                col[2] = m2->a_mat3[j + 6];
+//                 // Column
+//                 col[0] = m2->a_mat3[j + 0];
+//                 col[1] = m2->a_mat3[j + 3];
+//                 col[2] = m2->a_mat3[j + 6];
 
-                // clang-format off
-                out->a_mat3[i + j] =
-                   row[0] * col[0] +
-                   row[1] * col[1] +
-                   row[2] * col[2];
-                // clang-format on
-            }
-        }
-#endif
+//                 // clang-format off
+//                 out->a_mat3[i + j] =
+//                    row[0] * col[0] +
+//                    row[1] * col[1] +
+//                    row[2] * col[2];
+//                 // clang-format on
+//             }
+//         }
+// #endif
     }
 
     static char *mat3_tos(const mat3 *m)

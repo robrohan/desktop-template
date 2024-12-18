@@ -6,7 +6,6 @@
 #include "wefx.h"
 
 #define R2_MATHS_IMPLEMENTATION
-#define R2_MAT_MUL_LUDICROUS_SPEED 0
 #include "r2_maths.h"
 
 #ifndef EPSILON
