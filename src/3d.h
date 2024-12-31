@@ -32,7 +32,7 @@ typedef uint16_t ui16;
 typedef int8_t i8;
 typedef uint8_t ui8;
 typedef float f32;
-// typedef unsigned char ui8
+typedef unsigned char ui8;
 
 typedef struct vertex
 {
@@ -48,13 +48,26 @@ typedef struct texture
     unsigned short h; // 16
     // channels RGB=3 RGBA=4, etc
     unsigned char c;
-    ui8* image        //
+    ui8* image;       //
 } texture;
+
+typedef struct triangle
+{
+    vertex v[3];
+    texture tex;
+} triangle;
+
+typedef struct state
+{
+    triangle *ts;
+} state;
+
+///////////////////////////////////////
 
 vec2 rotate_vec(vec2 v, vec2 c, f32 angle);
 
 mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar);
 
-void draw_scene(i32 time, i32 W, i32 H, ui8* image);
+void draw_scene(i32 W, i32 H, state* state);
 
 #endif // WEFX_3D__H

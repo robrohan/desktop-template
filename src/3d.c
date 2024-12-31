@@ -7,8 +7,6 @@
 #include "3d.h"
 #include "r2_maths.h"
 
-#include <assert.h>
-
 #define PIXEL_SIZE 1
 
 /* Are we looking at a triangle like:
@@ -102,39 +100,34 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
     }
 }
 
-void draw_scene(i32 time, i32 W, i32 H, ui8* image)
+void draw_scene(i32 W, i32 H, state* state)
 {
-    texture tex = { .w=512, .h=512, .c=3, .image=image };
-
-    mat4 m = make_perspective(90.0, H/W, 1, 20);
+    // mat4 m = make_perspective(90.0, H/W, 1, 20);
     // perspective divide
     // char *str = mat4_tos(&m);
     // printf("%s\n", str);
     // free(str);
 
-    vertex tri[3];
-
-    tri[0] = (vertex){ {100, 10}, 0, 0};
-    tri[1] = (vertex){ {W - 100, 10}, 0, 1};
-    tri[2] = (vertex){ {W >> 1, abs( (H) * (sin(time * .01)))}, .5, .5 };
-
-    f32 angle = time * .01;
-    vec2 center = {W>>1, H>>1};
-    // printf("%d\n", angle);
-
-    vertex v0 = {rotate_vec(tri[0].vec, center, angle), 1, 1};
-    vertex v1 = {rotate_vec(tri[1].vec, center, angle), 0, 1};
-    vertex v2 = {rotate_vec(tri[2].vec, center, angle), 1, 0};
+    // f32 angle = time * .1;
+    // vec2 center = {W>>1, H>>1};
+    // vertex v0 = {rotate_vec(tri[0].vec, center, angle), 1, 1};
+    // vertex v1 = {rotate_vec(tri[1].vec, center, angle), 0, 1};
+    // vertex v2 = {rotate_vec(tri[2].vec, center, angle), 1, 0};
 
     wefx_clear();
 
-    triangle_fill(tri[0], tri[1], tri[2], &tex);
-    triangle_fill(v0, v1, v2, &tex);
+    triangle_fill(
+        state->ts->v[0],
+        state->ts->v[1],
+        state->ts->v[2],
+        &state->ts->tex
+    );
+    // triangle_fill(v0, v1, v2, &tex);
 
     wefx_color(0xff, 0xff, 0xff);
     vertex P = (vertex){ {W >> 1, H >> 1, 1} };
     wefx_pixel(P.vec.x, P.vec.y, 4);
-    wefx_rect(2,2,W-2,H-2,1);
+    // wefx_rect(2,2,W-2,H-2,1);
 }
 
 

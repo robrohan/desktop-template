@@ -2,7 +2,9 @@
 
 CC:=gcc
 APP:=example
+
 PLATFORM:=Linux
+CPU=x86
 
 C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wformat=2 -Wno-unused-parameter -Wshadow \
@@ -11,10 +13,11 @@ C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wno-unused
 
 STD:=c99
-DEBUG:=
+FILES:=src/wefx.c src/3d.c src/main.c
 EXT:=
-STATIC:=
+
 # Windows mignw32 needs static
+STATIC:=
 ifeq ($(CC),x86_64-w64-mingw32-gcc)
 	STATIC = --static
 endif
@@ -26,6 +29,7 @@ ifeq ($(PLATFORM),Windows)
 		-lgdi32 \
 		-lopengl32 \
 		-mwindows \
+		-mshstk \
 		$(STATIC)
 endif
 ifeq ($(PLATFORM),Darwin)
@@ -34,6 +38,7 @@ ifeq ($(PLATFORM),Darwin)
 		-framework AppKit \
 		-framework OpenGL \
 		-framework CoreVideo \
+		-mshstk \
 		$(STATIC)
 endif
 ifeq ($(PLATFORM),Linux)
@@ -44,6 +49,7 @@ ifeq ($(PLATFORM),Linux)
 		-ldl \
 		-lpthread \
 		-D_POSIX_C_SOURCE=200112L \
+		-mshstk \
 		$(STATIC)
 endif
 
@@ -62,12 +68,25 @@ convert:
 		./assets/a.png \
 		./assets/8x8_2.png
 
+# Develop build
+run:
+	mkdir -p ./build/$(PLATFORM)/$(CPU)/
+	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) -ggdb -std=$(STD) \
+		$(FILES) \
+		-I./vendor/ \
+		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
+		$(LIBS) \
+		-DWEFX_ORIGIN_TOP_LEFT
+#		-DDEBUG_UV_TRIANGLE
+#		-DDEBUG_BOX_TRIANGLE
+
 # Do the actual build
 build:
-	mkdir -p ./build/$(PLATFORM)
-	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) $(DEBUG) -std=$(STD) \
-		src/wefx.c src/3d.c src/main.c \
+	mkdir -p ./build/$(PLATFORM)/$(CPU)/
+	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) -std=$(STD) \
+		$(FILES) \
 		-I./vendor/ \
-		-o build/$(PLATFORM)/$(APP)$(EXT) \
-		$(LIBS)
+		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
+		$(LIBS) \
+		-DNDEBUG
 	cp ./LICENSE ./build/$(PLATFORM)/LICENSE

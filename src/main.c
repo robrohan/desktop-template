@@ -23,9 +23,16 @@ void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
     }
 }
 
-void draw(int time, ui8* image)
+void integrate(state* state, f32 t, f32 dt)
 {
-    draw_scene(time, W, H, image);
+    state->ts->v[2].vec.y = (H * sin(t));
+    // state->ts->v[2].vec.x += 1 * dt;
+    // printf("%f %f %f %f\n", t, dt, sin(t), state->ts->v[2].vec.y);
+}
+
+void render(state* state)
+{
+    draw_scene(W, H, state);
 }
 
 /////////////////////////////////////////////
@@ -55,16 +62,39 @@ int main(void)
     int w = 0;
     int h = 0;
     int channels = 0;
-    ui8* image = stbi_load("./assets/debug-diffuse-512.png", &w, &h, &channels, STBI_rgb);
+    ui8* image = stbi_load("./assets/8x8.png", &w, &h, &channels, STBI_rgb);
     printf("%dx%d %d\n", w, h, channels);
-    printf("%x %x %x\n", image[0], image[1], image[2]);
-    printf("%x %x %x\n", image[3], image[4], image[5]);
     /////
 
+    //////////////////////////////////////////////
+
+    triangle tris = {
+        .v = {
+            { .vec={100, 10}, 0, 0 },
+            { .vec={W-100, 10}, 0, 1},
+            { .vec={W>>1, H}, .5, .5}
+        },
+        .tex = {
+            .w = 8,
+            .h = 8,
+            .c = 3,
+            .image = image
+        }
+    };
+    state game_state = { .ts = &tris };
+
+    //////////////////////////////////////////////
+
     i8 running = 1;
-    int ticks = 0;
+    // will overflow after about 49 days
+    unsigned int ticks = 0;
+    ui32 current_time = 0;
+    f32 dt = 1 / 60.0;
+    f32 t = 0.0;
     while (running)
     {
+        RGFW_window_makeCurrent(win);
+
         // input
         while (RGFW_window_checkEvent(win))
         {
@@ -88,6 +118,8 @@ int main(void)
                 break;
             case RGFW_keyPressed:
                 printf("pressed: %d\n", win->event.keyCode);
+                if (RGFW_isPressed(win, RGFW_Space))
+                    printf("fps : %i\n", RGFW_window_checkFPS(win, 0));
                 break;
             case RGFW_keyReleased:
                 printf("released: %d\n", win->event.keyCode);
@@ -103,16 +135,33 @@ int main(void)
             }
         }
 
+        // time
+        ticks++;
+        ui32 new_time = ticks;
+        ui32 frame_time = new_time - current_time;
+        current_time = new_time;
+
+        // physics - converting Time Deltas to seconds
+        // receiving the time delta in terms of seconds will be more
+        // intuitive than working with milliseconds
+        // δ or Δ time
+        while(frame_time > 0.0)
+        {
+            float delta_time = MIN(frame_time, dt);
+            integrate(&game_state, t, delta_time);
+            frame_time -= delta_time;
+            t += delta_time;
+        }
+
         // render
-        draw(ticks, image);
+        render(&game_state);
+
+        // draw our framebuffer bitmap to the screen
         RGFW_window_setGPURender(win, 0);
         RGFW_window_swapBuffers(win);
-
         draw_bitmap(win, (u8 *)wefx_get_buffer(), RGFW_RECT(0, 0, W, H));
-        ticks++;
     }
 
     stbi_image_free(image);
-    // free(image);
     RGFW_window_close(win);
 }
