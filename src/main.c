@@ -55,7 +55,7 @@ int main(void)
     int w = 0;
     int h = 0;
     int channels = 0;
-    ui8* image = stbi_load("./assets/8x8.png", &w, &h, &channels, STBI_rgb);
+    ui8* image = stbi_load("./assets/debug-diffuse-512.png", &w, &h, &channels, STBI_rgb);
     printf("%dx%d %d\n", w, h, channels);
     printf("%x %x %x\n", image[0], image[1], image[2]);
     printf("%x %x %x\n", image[3], image[4], image[5]);
@@ -83,7 +83,7 @@ int main(void)
                 printf("mouse released: %d\n", win->event.button);
                 break;
             case RGFW_mousePosChanged:
-                // printf("Mouse move %dx%d\n", 
+                // printf("Mouse move %dx%d\n",
                 //     win->event.point.x, win->event.point.y);
                 break;
             case RGFW_keyPressed:
@@ -107,11 +107,12 @@ int main(void)
         draw(ticks, image);
         RGFW_window_setGPURender(win, 0);
         RGFW_window_swapBuffers(win);
-        
+
         draw_bitmap(win, (u8 *)wefx_get_buffer(), RGFW_RECT(0, 0, W, H));
         ticks++;
     }
 
-    free(image);
+    stbi_image_free(image);
+    // free(image);
     RGFW_window_close(win);
 }

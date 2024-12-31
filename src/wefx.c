@@ -89,7 +89,7 @@ void wefx_color(unsigned int red, unsigned int green, unsigned int blue)
     wefx_color_i(rgb_to_int(red, green, blue));
 }
 
-void wefx_color_i(int color) 
+void wefx_color_i(int color)
 {
     fg_color = color;
 }
@@ -106,6 +106,7 @@ By setting the value at $x + y * w$ we are drawing a point at $(x,y)$ on the scr
 */
 void wefx_point(int x, int y)
 {
+#ifdef WEFX_ORIGIN_BOTTOM_LEFT
     int inboundx = x-1 < 0 ? 0 : x-1;
     int inboundy = y+1 > h ? y : y+1;
     //               because 0,0 should display at the bottom left
@@ -114,6 +115,15 @@ void wefx_point(int x, int y)
     if(offset > w*h || offset < 0) {
         return;
     }
+#elif WEFX_ORIGIN_TOP_LEFT
+    int offset = x + y * w;
+#elif WEFX_ORIGIN_CENTER
+    int cx = ((w / 2) + x);
+    int cy = ((h / 2) + y);
+    int offset = cx + cy * w;
+#else
+    int offset = x + y * w;
+#endif
     buffer[offset] = fg_color;
 }
 /*

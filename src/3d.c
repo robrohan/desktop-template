@@ -7,6 +7,8 @@
 #include "3d.h"
 #include "r2_maths.h"
 
+#include <assert.h>
+
 #define PIXEL_SIZE 1
 
 /* Are we looking at a triangle like:
@@ -24,24 +26,23 @@ i8 is_top_left(vec2 *s, vec2 *e)
     return (edge.y == 0 && edge.x > 0) || edge.y > 0;
 }
 
-/* Clockwise 
+/* Clockwise
          B
         /\
        /  \
       /    \
     A ----- C
-  and our drawing 0,0 is the bottom left (not top left)
 */
-void triangle_fill(vertex A, vertex B, vertex C, ui8* image)
+void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
 {
     // Calculate the edge function for the whole triangle (ABC)
     // pointing towards the center basically
-    f32 ABC = -1 * vec2_edge_cross(&A.vec, &B.vec, &C.vec);
+    f32 ABC = vec2_edge_cross(&A.vec, &B.vec, &C.vec);
     if(ABC < 0) {
          return;
     }
 
-    // This will squeeze everything towards the center of the triangle a bit 
+    // This will squeeze everything towards the center of the triangle a bit
     // if it has a left/top bias - which will help with overlapping overdraw
     f32 bias0 = is_top_left(&A.vec, &B.vec) ? 0 : -1;
     f32 bias1 = is_top_left(&B.vec, &C.vec) ? 0 : -1;
@@ -65,46 +66,35 @@ void triangle_fill(vertex A, vertex B, vertex C, ui8* image)
             f32 AB_P = vec2_edge_cross(&A.vec, &B.vec, &SP.vec) + bias0;
             f32 BC_P = vec2_edge_cross(&B.vec, &C.vec, &SP.vec) + bias1;
             f32 CA_P = vec2_edge_cross(&C.vec, &A.vec, &SP.vec) + bias2;
-            
+
             // Our graphics system has 0,0 on the bottom left not the
             // top right
-            if (AB_P < 0 && BC_P < 0 && CA_P < 0)
+            if (AB_P > 0 && BC_P > 0 && CA_P > 0)
             {
-                // Normalise the edge functions by dividing by the total 
+                // Normalise the edge functions by dividing by the total
                 // area to get the barycentric coordinates. The weights used
                 // to interplate the points in the triangle
-                // f32 wA = ((BC_P * 100) / ABC); // alpha
-                // f32 wB = ((CA_P * 100) / ABC); // beta
-                // f32 wG = ((AB_P * 100) / ABC); // gamma
                 f32 wA = (BC_P / ABC); // alpha
                 f32 wB = (CA_P / ABC); // beta
                 f32 wG = (AB_P / ABC); // gamma
-                // printf("%f %f %f\n", wA, wB, wG);
 
 #ifdef DEBUG_UV_TRIANGLE
                 ui8 r = (255.0 * wA) + (000.0 * wB) + (000.0 * wG);
                 ui8 g = (000.0 * wA) + (255.0 * wB) + (000.0 * wG);
                 ui8 b = (000.0 * wA) + (000.0 * wB) + (255.0 * wG);
-                // printf("%x %x %x\n", r, g, b);
                 wefx_color(r, g, b);
 #else
-                f32 x_img = ((A.u * wA) + (B.u * wB) + (C.u * wG)); // / 100;
-                f32 y_img = ((A.v * wA) + (B.v * wB) + (C.v * wG)); // / 100;
-                // printf("%f --> %f %f\n", wA+wB+wG, x_img, y_img);
+                f32 x_img = ((A.u * wA) + (B.u * wB) + (C.u * wG));
+                f32 y_img = ((A.v * wA) + (B.v * wB) + (C.v * wG));
 
-                ui32 pixx = (x_img * 8) -.5;
-                ui32 pixy = (y_img * 8) -.5;
-                // printf("%d %d\n", pixx, pixy);
+                ui32 pixx = (tex->w * x_img);
+                ui32 pixy = (tex->h * y_img);
 
-                i32 pix = pixx*pixy*3;
-                ui8 r = image[pix+0];
-                ui8 g = image[pix+1];
-                ui8 b = image[pix+2];
+                i32 pix = (int) ((pixy * tex->w + pixx) * tex->c);
+                ui8 r = tex->image[pix+0];
+                ui8 g = tex->image[pix+1];
+                ui8 b = tex->image[pix+2];
                 wefx_color(r, g, b);
-
-                // i32 c = image[pix];
-                // // // printf("%x\n", c);
-                // wefx_color_i(c);
 #endif
                 wefx_pixel(SP.vec.x, SP.vec.y, PIXEL_SIZE);
             }
@@ -114,6 +104,8 @@ void triangle_fill(vertex A, vertex B, vertex C, ui8* image)
 
 void draw_scene(i32 time, i32 W, i32 H, ui8* image)
 {
+    texture tex = { .w=512, .h=512, .c=3, .image=image };
+
     mat4 m = make_perspective(90.0, H/W, 1, 20);
     // perspective divide
     // char *str = mat4_tos(&m);
@@ -121,12 +113,10 @@ void draw_scene(i32 time, i32 W, i32 H, ui8* image)
     // free(str);
 
     vertex tri[3];
-    tri[0] = (vertex){ {100, 10}, 0, 0};
-    tri[1] = (vertex){ {W >> 1, abs( (H) * (sin(time * .01)))}, 1, 0 };
-    tri[2] = (vertex){ {W - 100, 10}, 0, 1};
 
-    // tri[3] = (vertex){ {W - 100, H-10}, 32, 128 };
-    // tri[4] = (vertex){ {W - 10, H-50}, 128, 64 };
+    tri[0] = (vertex){ {100, 10}, 0, 0};
+    tri[1] = (vertex){ {W - 100, 10}, 0, 1};
+    tri[2] = (vertex){ {W >> 1, abs( (H) * (sin(time * .01)))}, .5, .5 };
 
     f32 angle = time * .01;
     vec2 center = {W>>1, H>>1};
@@ -138,18 +128,17 @@ void draw_scene(i32 time, i32 W, i32 H, ui8* image)
 
     wefx_clear();
 
-    triangle_fill(tri[0], tri[1], tri[2], image);
-    // triangle_fill(tri[2], tri[3], tri[4], image);
-    // triangle_fill(tri[3], tri[2], tri[1], image);
-    triangle_fill(v0, v1, v2, image);
+    triangle_fill(tri[0], tri[1], tri[2], &tex);
+    triangle_fill(v0, v1, v2, &tex);
 
     wefx_color(0xff, 0xff, 0xff);
     vertex P = (vertex){ {W >> 1, H >> 1, 1} };
     wefx_pixel(P.vec.x, P.vec.y, 4);
+    wefx_rect(2,2,W-2,H-2,1);
 }
 
 
-vec2 rotate_vec(vec2 v, vec2 c, f32 angle) 
+vec2 rotate_vec(vec2 v, vec2 c, f32 angle)
 {
     vec2 rot = {0};
     v.x -= c.x;

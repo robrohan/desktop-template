@@ -40,6 +40,16 @@ typedef struct vertex
     f32 u,v;
 } vertex;
 
+typedef struct texture
+{
+    // Short unsigned integer type.
+    // Contains at least the [0, 65535] range
+    unsigned short w; // 16
+    unsigned short h; // 16
+    // channels RGB=3 RGBA=4, etc
+    unsigned char c;
+    ui8* image        //
+} texture;
 
 vec2 rotate_vec(vec2 v, vec2 c, f32 angle);
 
