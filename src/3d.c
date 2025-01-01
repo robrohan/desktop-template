@@ -89,7 +89,7 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
                 ui32 pixx = (tex->w * x_img);
                 ui32 pixy = (tex->h * y_img);
 
-                i32 pix = (int) ((pixy * tex->w + pixx) * tex->c);
+                i32 pix = (int) ((pixy * tex->w + pixx) * 3);
                 ui8 r = tex->image[pix+0];
                 ui8 g = tex->image[pix+1];
                 ui8 b = tex->image[pix+2];
@@ -101,7 +101,7 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
     }
 }
 
-void draw_scene(i32 W, i32 H, state* state)
+void draw_scene(mat4* screenM, state* state)
 {
     // mat4 m = make_perspective(90.0, H/W, 1, 20);
     // perspective divide
@@ -117,58 +117,89 @@ void draw_scene(i32 W, i32 H, state* state)
 
     wefx_clear();
 
+    vec4 A = {0};
+    vec4 B = {0};
+    vec4 C = {0};
+    mat4_transform(&state->ts->v[0].vec, screenM, &A);
+    mat4_transform(&state->ts->v[1].vec, screenM, &B);
+    mat4_transform(&state->ts->v[2].vec, screenM, &C);
+    // printf("A: %f %f %f\n", A.x, A.y, A.z);
+    // printf("B: %f %f %f\n", B.x, B.y, B.z);
+    // printf("C: %f %f %f\n\n", C.x, C.y, C.z);
+
     triangle_fill(
-        state->ts->v[0],
-        state->ts->v[1],
-        state->ts->v[2],
+        (vertex){ .vec=A, .u=state->ts->v[0].u, .v=state->ts->v[0].v},
+        (vertex){ .vec=B, .u=state->ts->v[1].u, .v=state->ts->v[1].v},
+        (vertex){ .vec=C, .u=state->ts->v[2].u, .v=state->ts->v[2].v},
         &state->ts->tex
     );
-    // triangle_fill(v0, v1, v2, &tex);
 
     wefx_color(0xff, 0xff, 0xff);
-    vertex P = (vertex){ {W >> 1, H >> 1, 1} };
+
+    vec4 P = {0, 0, 0, 1};
+    vec4 pt = {0};
+    mat4_transform(&P, screenM, &pt);
     wefx_set_psize(4);
-    wefx_pixel(P.vec.x, P.vec.y);
+    wefx_pixel(pt.x, pt.y);
     wefx_set_psize(1);
-    // wefx_rect(2,2,W-2,H-2,1);
 }
 
 
-vec2 rotate_vec(vec2 v, vec2 c, f32 angle)
+// vec2 rotate_vec(vec2 v, vec2 c, f32 angle)
+// {
+//     vec2 rot = {0};
+//     v.x -= c.x;
+//     v.y -= c.y;
+
+//     // these aren't ints
+//     rot.x = v.x * cosf(angle) - v.y * sinf(angle);
+//     rot.y = v.x * sinf(angle) + v.y * cosf(angle);
+
+//     rot.x += c.x;
+//     rot.y += c.y;
+
+//     rot.x = round(rot.x);
+//     rot.y = round(rot.y);
+
+//     return rot;
+// }
+
+mat4 make_screenSpaceTransform(float hW, float hH)
 {
-    vec2 rot = {0};
-    v.x -= c.x;
-    v.y -= c.y;
+    // If you look at the projection matrix calculations you will see that they
+    // do not depend on the resolution of the framebuffer, but on the aspect ratio
+    // defined by the width / height. This is because the output of the vertex
+    // shader is in clip space which is an axis aligned cube with coordinates
+    // ranging from (-1.0,-1.0,-1.0) to (+1.0,+1.0,+1.0). The clip space coordinates
+    // are transformed to screen space coordinates using the viewport transform you
+    // set with glViewport.
 
-    // these aren't ints
-    rot.x = v.x * cosf(angle) - v.y * sinf(angle);
-    rot.y = v.x * sinf(angle) + v.y * cosf(angle);
-
-    rot.x += c.x;
-    rot.y += c.y;
-
-    rot.x = round(rot.x);
-    rot.y = round(rot.y);
-
-    return rot;
-}
-
-mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar)
-{
     mat4 out = {0};
-
-    f32 Sx = aspect * (1 / tanf(fov /2));
-    f32 Sy = 1 / tanf(fov / 2);
-    f32 Sz = zfar / (zfar - znear);
-    f32 Pz = (-zfar * znear) / (zfar - znear);
-
     // clang-format off
-    out.m00 = Sx; out.m10 = 0;  out.m20 = 0;  out.m30 = 0;
-    out.m01 = 0;  out.m11 = Sy; out.m21 = 0;  out.m31 = 0;
-    out.m02 = 0;  out.m12 = 0;  out.m22 = Sz; out.m32 = Pz;
-    out.m03 = 0;  out.m13 = 0;  out.m23 = 1; out.m33 = 0;
+    out.m00 = hW;  out.m10 = 0;   out.m20 = 0;  out.m30 = hW;
+    out.m01 = 0;   out.m11 = -hH;  out.m21 = 0;  out.m31 = hH;
+    out.m02 = 0;   out.m12 = 0;   out.m22 = 1;  out.m32 = 0;
+    out.m03 = 0;   out.m13 = 0;   out.m23 = 0;  out.m33 = 1;
     // clang-format on
-
     return out;
 }
+
+// mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar)
+// {
+//     mat4 out = {0};
+
+//     f32 Sx = aspect * (1 / tanf(fov /2));
+//     f32 Sy = 1 / tanf(fov / 2);
+//     f32 Sz = zfar / (zfar - znear);
+//     f32 Pz = (-zfar * znear) / (zfar - znear);
+
+//     // clang-format off
+//     out.m00 = Sx; out.m10 = 0;  out.m20 = 0;  out.m30 = 0;
+//     out.m01 = 0;  out.m11 = Sy; out.m21 = 0;  out.m31 = 0;
+//     out.m02 = 0;  out.m12 = 0;  out.m22 = Sz; out.m32 = Pz;
+//     out.m03 = 0;  out.m13 = 0;  out.m23 = 1; out.m33 = 0;
+//     // clang-format on
+
+//     return out;
+// }
 

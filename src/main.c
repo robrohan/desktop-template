@@ -34,14 +34,16 @@ void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
 
 void integrate(state* state, f32 t, f32 dt)
 {
-    state->ts->v[2].vec.y = (H * sin(t));
+    state->ts->v[2].vec.y = sin(t);
     // state->ts->v[2].vec.x += 1 * dt;
     // printf("%f %f %f %f\n", t, dt, sin(t), state->ts->v[2].vec.y);
 }
 
 void render(state* state)
 {
-    draw_scene(W, H, state);
+    // TODO: on each loop?
+    mat4 screenSpaceM = make_screenSpaceTransform(W/2, H/2);
+    draw_scene(&screenSpaceM, state);
 }
 
 /////////////////////////////////////////////
@@ -81,7 +83,7 @@ int main(void)
     int w = 0;
     int h = 0;
     int channels = 0;
-    ui8* image = stbi_load("./assets/8x8.png", &w, &h, &channels, STBI_rgb);
+    ui8* image = stbi_load("./assets/debug-diffuse-512.png", &w, &h, &channels, STBI_rgb);
     printf("%dx%d %d\n", w, h, channels);
     /////
 
@@ -89,14 +91,13 @@ int main(void)
 
     triangle tris = {
         .v = {
-            { .vec={100, 10}, 0, 0 },
-            { .vec={W-100, 10}, 0, 1},
-            { .vec={W>>1, H}, .5, .5}
+            { .vec={-1,  1, 0, 1},  0,  0 },
+            { .vec={ 1,  1, 0, 1},  0,  1 },
+            { .vec={ 0, -1, 0, 1}, .5, .5 }
         },
         .tex = {
-            .w = 8,
-            .h = 8,
-            .c = 3,
+            .w = 512,
+            .h = 512,
             .image = image
         }
     };
@@ -182,10 +183,10 @@ int main(void)
 #endif
 
 #ifdef RENDER_OPENGL
-        // glEnable(GL_BLEND);
+        // https://bdptech.blogspot.com/2016/05/using-opengl-to-blit-array-of-pixels.html
         int scale_width = win->r.w * scale;
         int scale_height = win->r.h * scale;
-
+        glEnable(GL_BLEND);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         glViewport((GLint)0, (GLint)0, (GLint)scale_width, (GLint)scale_height);
@@ -227,6 +228,7 @@ int main(void)
         // draw our framebuffer bitmap to the screen
         RGFW_window_setGPURender(win, 1);
         RGFW_window_swapBuffers(win);
+        // RGFW_window_checkFPS(win, 60);
     }
 
     stbi_image_free(image);

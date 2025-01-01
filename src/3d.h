@@ -36,7 +36,7 @@ typedef unsigned char ui8;
 
 typedef struct vertex
 {
-    vec2 vec;
+    vec4 vec;
     f32 u,v;
 } vertex;
 
@@ -46,8 +46,6 @@ typedef struct texture
     // Contains at least the [0, 65535] range
     unsigned short w; // 16
     unsigned short h; // 16
-    // channels RGB=3 RGBA=4, etc
-    unsigned char c;
     ui8* image;       //
 } texture;
 
@@ -64,10 +62,12 @@ typedef struct state
 
 ///////////////////////////////////////
 
-vec2 rotate_vec(vec2 v, vec2 c, f32 angle);
+// vec2 rotate_vec(vec2 v, vec2 c, f32 angle);
 
-mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar);
+mat4 make_screenSpaceTransform(float hW, float hH);
 
-void draw_scene(i32 W, i32 H, state* state);
+// mat4 make_perspective(f32 fov, f32 aspect, f32 znear, f32 zfar);
+
+void draw_scene(mat4* screenM, state* state);
 
 #endif // WEFX_3D__H

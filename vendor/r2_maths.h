@@ -82,6 +82,12 @@ extern "C"
      * is used by vec4, quat, vec3 and color. You can
      * access the value using ->a_vec or one of
      * the struct values ->x ->y ->z ->w
+     *
+     * w=1: Represents a point in 3D space.
+     * w=0: Represents a direction or vector in 3D space.
+     * Perspective Division: Divides x, y, and z by w.
+     *  If w≠1, the coordinates are scaled, and if w=0, the
+     *  vertex is considered to be at infinity and can be clipped out.
      */
     typedef union u_vec4 {
         float a_vec[4];
@@ -169,6 +175,10 @@ extern "C"
      * multiply and use calloc.
      */
     static void mat4_mul(const mat4 *m1, const mat4 *m2, mat4 *out);
+    /**
+     * Multiply a vector by a matrix - or "transform" the vector from
+     * one space to another
+     */
     static void mat4_transform(const vec4 *p, const mat4 *mat, vec4 *out);
     /**
      * Fills an mat4 with an array. It expects an array of values
@@ -185,6 +195,8 @@ extern "C"
     static void mat4_lookat(const vec4 *pos, const vec4 *target, const vec4 *up, mat4 *out);
     static void mat4_transpose(const mat4 *m1, mat4 *m2);
     static char *mat4_tos(const mat4 *m);
+
+    // static void mat4_mul_vec4(const mat4 *m, const vec4 *v, vec4 *out);
 
     /**
      * Multiply two 3x3 matrix output to out
@@ -845,10 +857,10 @@ extern "C"
 
     static void mat4_transform(const vec4 *p, const mat4 *mat, vec4 *out)
     {
-        out->x = (mat->m00 * p->x) + (mat->m01 * p->y) + (mat->m02 * p->z) + (mat->m03 * p->w);
-        out->y = (mat->m10 * p->x) + (mat->m11 * p->y) + (mat->m12 * p->z) + (mat->m13 * p->w);
-        out->z = (mat->m20 * p->x) + (mat->m21 * p->y) + (mat->m22 * p->z) + (mat->m23 * p->w);
-        out->w = (mat->m30 * p->x) + (mat->m31 * p->y) + (mat->m32 * p->z) + (mat->m33 * p->w);
+        out->x = (mat->m00 * p->x) + (mat->m10 * p->y) + (mat->m20 * p->z) + (mat->m30 * p->w);
+        out->y = (mat->m01 * p->x) + (mat->m11 * p->y) + (mat->m21 * p->z) + (mat->m31 * p->w);
+        out->z = (mat->m02 * p->x) + (mat->m12 * p->y) + (mat->m22 * p->z) + (mat->m32 * p->w);
+        out->w = (mat->m03 * p->x) + (mat->m13 * p->y) + (mat->m23 * p->z) + (mat->m33 * p->w);
     }
 
     static void mat4_mul(const mat4 *m1, const mat4 *m2, mat4 *out)
@@ -1055,6 +1067,14 @@ extern "C"
         // clang-format on
         return out;
     }
+
+    // static void mat4_mul_vec4(const mat4 *m, const vec4 v*, vec4 *out)
+    // {
+    //     out[0] = ((m.m00 * v[0]) + (m.m10 * v[1]) + (m.m20 * v[2]) + (m.m30 * v[3]))
+    //     out[1] = ((m.m01 * v[0]) + (m.m11 * v[1]) + (m.m21 * v[2]) + (m.m31 * v[3]))
+    //     out[2] = ((m.m02 * v[0]) + (m.m12 * v[1]) + (m.m22 * v[2]) + (m.m32 * v[3]))
+    //     out[3] = ((m.m03 * v[0]) + (m.m13 * v[1]) + (m.m23 * v[2]) + (m.m33 * v[3]))
+    // }
 
     ///////////////////////////////////////////////////////////////
     // Generic Matrix Multiply
