@@ -56,6 +56,7 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
     wefx_rect(minX, maxY, maxX, minY, 1);
 #endif
 
+    wefx_set_psize(PIXEL_SIZE);
     vertex SP = (vertex){ {0, 0}, 0, 0};
     for (SP.vec.y = minY; SP.vec.y < maxY; SP.vec.y+=PIXEL_SIZE)
     {
@@ -94,7 +95,7 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
                 ui8 b = tex->image[pix+2];
                 wefx_color(r, g, b);
 #endif
-                wefx_pixel(SP.vec.x, SP.vec.y, PIXEL_SIZE);
+                wefx_pixel(SP.vec.x, SP.vec.y);
             }
         }
     }
@@ -126,7 +127,9 @@ void draw_scene(i32 W, i32 H, state* state)
 
     wefx_color(0xff, 0xff, 0xff);
     vertex P = (vertex){ {W >> 1, H >> 1, 1} };
-    wefx_pixel(P.vec.x, P.vec.y, 4);
+    wefx_set_psize(4);
+    wefx_pixel(P.vec.x, P.vec.y);
+    wefx_set_psize(1);
     // wefx_rect(2,2,W-2,H-2,1);
 }
 

@@ -54,6 +54,14 @@ extern "C"
 #define M_PI 3.141592653589
 #endif
 
+#ifndef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
     /**
      * A 2d vector backed by an array. This type
      * is only used by vec2. You can
@@ -939,7 +947,7 @@ extern "C"
     {
         char *out = calloc(sizeof(char), 300);
         // clang-format off
-        snprintf(out, 300, "[\n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n]\n", 
+        snprintf(out, 300, "[\n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n]\n",
             m->m00, m->m10, m->m20, m->m30,
             m->m01, m->m11, m->m21, m->m31,
             m->m02, m->m12, m->m22, m->m32,
@@ -1039,7 +1047,7 @@ extern "C"
     {
         char *out = calloc(sizeof(char), 300);
         // clang-format off
-        snprintf(out, 300, "[\n %f, %f, %f \n %f, %f, %f \n %f, %f, %f \n]\n", 
+        snprintf(out, 300, "[\n %f, %f, %f \n %f, %f, %f \n %f, %f, %f \n]\n",
             m->m00, m->m10, m->m20,
             m->m01, m->m11, m->m21,
             m->m02, m->m12, m->m22

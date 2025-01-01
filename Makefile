@@ -76,7 +76,11 @@ run:
 		-I./vendor/ \
 		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
 		$(LIBS) \
-		-DWEFX_ORIGIN_TOP_LEFT
+		-DWEFX_NO_WALLOC \
+		-DWEFX_NO_EXPORT \
+		-DWEFX_NO_MATH \
+		-DWEFX_ORIGIN_TOP_LEFT \
+		-DRENDER_OPENGL
 #		-DDEBUG_UV_TRIANGLE
 #		-DDEBUG_BOX_TRIANGLE
 
@@ -88,5 +92,10 @@ build:
 		-I./vendor/ \
 		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
 		$(LIBS) \
-		-DNDEBUG
+		-DNDEBUG \
+		-DWEFX_NO_WALLOC \
+		-DWEFX_NO_EXPORT \
+		-DWEFX_NO_MATH \
+		-DWEFX_ORIGIN_TOP_LEFT \
+		-DRENDER_OPENGL
 	cp ./LICENSE ./build/$(PLATFORM)/LICENSE

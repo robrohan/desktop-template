@@ -1,24 +1,25 @@
 #ifndef WEFX__H
 #define WEFX__H
 
+#ifndef WEFX_NO_MATH
+#include "math.h"
+#endif
+
+#ifndef WEFX_NO_WALLOC
+#include "walloc.h"
+#else
 #include <stdlib.h>
-
-#ifndef EPSILON
-#define EPSILON 0.000000954
 #endif
 
-#ifndef M_PI
-// clang-format off
-#define M_PI     3.141592653589
-#define M_PI2    6.283185307179
-#define M_PI_SQR 9.869604401089
-#define M_PID2   1.570796326794
-#define M_3PID2  4.712388980384
-// clang-format on
+#ifndef WEFX_NO_EXPORT
+#include "wasm.h"
+#else
+#define EXPORT
 #endif
 
+#ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
 
 // Open a new graphics window.
 int wefx_open(unsigned int width, unsigned int height, const char *title);
@@ -26,19 +27,21 @@ int wefx_open(unsigned int width, unsigned int height, const char *title);
 // Draw a point at (x,y)
 void wefx_point(int x, int y);
 
-void wefx_pixel(int left, int top, int psize);
+// Draw a pixel at (x0,y0) with size psize
+void wefx_pixel(int x0, int y0);
 
-void wefx_circle(int x0, int y0, int r0, int psize);
+void wefx_circle(int x0, int y0, int r);
 
-// Draw a line from (x1,y1) to (x2,y2)
-void wefx_line(int x1, int y1, int x2, int y2, int psize);
+// Draw a line from (x0,y0) to (x1,y1)
+void wefx_line(int x0, int y0, int x1, int y1);
 
-void wefx_rect(int x0, int y0, int x1, int y1, int psize);
+// Draw a rectangle from top left (x1, y1), to bottom right (x2,y2)
+void wefx_rect(int x0, int y0, int x1, int y1);
+
+void wefx_set_psize(int size);
 
 // Change the current drawing color.
 void wefx_color(unsigned int red, unsigned int green, unsigned int blue);
-
-void wefx_color_i(int color);
 
 // Clear the graphics window to the background color.
 void wefx_clear(void);

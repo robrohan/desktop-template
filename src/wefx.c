@@ -10,13 +10,13 @@ enumerations we will be using throughout this implementation file.
 */
 #include "wefx.h"
 
-typedef unsigned int color;
 /*
 
 Make variables for our double buffered screen, and export the _screen_ variable so Javascript
 can use it's contents to create an image.
 
 */
+EXPORT unsigned int *screen;
 static unsigned int *buffer;
 /*
 
@@ -24,10 +24,11 @@ We also defined some global variables for foreground and background colour, as w
 global width (_w_) and height (_h_) variable.
 
 */
-static color fg_color = 0;
-static color bg_color = 0;
+static unsigned int fg_color = 0;
+static unsigned int bg_color = 0;
 static int w = 0;
 static int h = 0;
+static int psize = 1;
 /*
 
 ## Opening a Canvas - wefx_open
@@ -39,7 +40,7 @@ int wefx_open(unsigned int width, unsigned int height, const char *title)
 {
     w = width;
     h = height;
-    buffer = malloc(w * h * sizeof(color));
+    buffer = malloc(w * h * sizeof(int));
     if (buffer == NULL)
     {
         return 1;
@@ -86,14 +87,19 @@ Subsequent calls to draw will use this color until it is changed.
 */
 void wefx_color(unsigned int red, unsigned int green, unsigned int blue)
 {
-    wefx_color_i(rgb_to_int(red, green, blue));
+    fg_color = rgb_to_int(red, green, blue);
 }
+/*
 
-void wefx_color_i(int color)
+## Set the Drawing Pixel Size
+
+Default pixel size is 1
+
+*/
+void wefx_set_psize(int size)
 {
-    fg_color = color;
+    psize = size;
 }
-
 /*
 
 ## Draw a Single Point - wefx_point
@@ -106,23 +112,21 @@ By setting the value at $x + y * w$ we are drawing a point at $(x,y)$ on the scr
 */
 void wefx_point(int x, int y)
 {
-#ifdef WEFX_ORIGIN_BOTTOM_LEFT
-    int inboundx = x-1 < 0 ? 0 : x-1;
-    int inboundy = y+1 > h ? y : y+1;
-    //               because 0,0 should display at the bottom left
-    //               we need to add 1 to the height or 0 is offscreen
-    int offset = inboundx + (((int)abs( (inboundy) - h) * w));
-    if(offset > w*h || offset < 0) {
-        return;
-    }
-#elif WEFX_ORIGIN_TOP_LEFT
+#ifdef WEFX_ORIGIN_TOP_LEFT
     int offset = x + y * w;
 #elif WEFX_ORIGIN_CENTER
     int cx = ((w / 2) + x);
     int cy = ((h / 2) + y);
     int offset = cx + cy * w;
-#else
-    int offset = x + y * w;
+#else // WEFX_ORIGIN_BOTTOM_LEFT
+    int inboundx = x-1 < 0 ? 0 : x-1;
+    int inboundy = y+1 > h ? y : y+1;
+    // because 0,0 should display at the bottom left
+    // we need to add 1 to the height or 0 is offscreen
+    int offset = inboundx + (((int)abs( (inboundy) - h) * w));
+    if(offset > w*h || offset < 0) {
+        return;
+    }
 #endif
     buffer[offset] = fg_color;
 }
@@ -133,19 +137,20 @@ This function draw's a pixel to the screen. This is similar to "point" but can
 have an arbitrary size. This is useful for stylized rendering. For example if
 you want a more chucky rendering, you can use a 4x4 pixel size
 
+The start point of the pixel is the top left of the group.
+
 */
-void wefx_pixel(int left, int top, int psize)
+void wefx_pixel(int x0, int y0)
 {
-    top = top + psize;
+    y0 = y0 + psize;
     for (int r = 0; r <= psize; r++)
     {
         for (int c = 0; c <= psize; c++)
         {
-            wefx_point(left + r, top - c);
+            wefx_point(x0 + r, y0 - c);
         }
     }
 }
-
 /*
 
 ## Set the Background Color - wefx_clear_color
@@ -183,7 +188,7 @@ Here we define a simple function to draw a line. It will draw from (x1,y1) to (x
 using Bresenham's line algorithm and the currently set foreground color [@BresenhamLineAlgorithm_2022_].
 
 */
-void wefx_line(int x0, int y0, int x1, int y1, int psize)
+void wefx_line(int x0, int y0, int x1, int y1)
 {
     int dx = abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
@@ -193,7 +198,7 @@ void wefx_line(int x0, int y0, int x1, int y1, int psize)
 
     for (;;)
     {
-        wefx_pixel(x0, y0, psize);
+        wefx_pixel(x0, y0);
         if (x0 == x1 && y0 == y1)
             break;
         int e2 = 2 * error;
@@ -213,15 +218,21 @@ void wefx_line(int x0, int y0, int x1, int y1, int psize)
         }
     }
 }
+/*
 
-void wefx_rect(int x0, int y0, int x1, int y1, int psize)
+## Draw a Rectangle - wefx_rect
+
+Draws a rectangle where x0,y0 is the top left of the rectangle and
+x1,y1 is the bottom right.
+
+*/
+void wefx_rect(int x0, int y0, int x1, int y1)
 {
-    wefx_line(x0, y0, x0, y1, psize);
-    wefx_line(x0, y1, x1, y1, psize);
-    wefx_line(x1, y1, x1, y0, psize);
-    wefx_line(x1, y0, x0, y0, psize);
+    wefx_line(x0, y0, x0, y1);
+    wefx_line(x0, y1, x1, y1);
+    wefx_line(x1, y1, x1, y0);
+    wefx_line(x1, y0, x0, y0);
 }
-
 /*
 
 ## Draw a Circle - wefx_circle
@@ -230,22 +241,22 @@ This function can be called to draw a circle. It also uses the
 currently set foreground color. It uses the Midpoint Circle Algorithm [@MidpointCircleAlgorithm_2022_].
 
 */
-void wefx_circle(int x0, int y0, int r0, int psize)
+void wefx_circle(int x0, int y0, int r)
 {
-    int x = r0;
+    int x = r;
     int y = 0;
     int err = 0;
     while (x >= y)
     {
-        wefx_pixel(x0 + x, y0 + y, psize);
+        wefx_pixel(x0 + x, y0 + y);
 
-        wefx_pixel(x0 + y, y0 + x, psize);
-        wefx_pixel(x0 - y, y0 + x, psize);
-        wefx_pixel(x0 - x, y0 + y, psize);
-        wefx_pixel(x0 - x, y0 - y, psize);
-        wefx_pixel(x0 - y, y0 - x, psize);
-        wefx_pixel(x0 + y, y0 - x, psize);
-        wefx_pixel(x0 + x, y0 - y, psize);
+        wefx_pixel(x0 + y, y0 + x);
+        wefx_pixel(x0 - y, y0 + x);
+        wefx_pixel(x0 - x, y0 + y);
+        wefx_pixel(x0 - x, y0 - y);
+        wefx_pixel(x0 - y, y0 - x);
+        wefx_pixel(x0 + y, y0 - x);
+        wefx_pixel(x0 + x, y0 - y);
 
         y += 1;
         err += 2 * y + 1;
@@ -267,24 +278,25 @@ drawn to the screen.
 This method is called from Javascript and asks us to draw our buffer to
 what it considers to be the screen.
 
----
-
-*Note*: there might be a faster / better way to do this.
-
----
-
 */
-void wefx_draw(unsigned int *iscreen)
+EXPORT void wefx_draw(unsigned int *iscreen)
 {
+    // TODO: memcopy
     for (int q = 0; q < (w * h); ++q)
         iscreen[q] = buffer[q];
 }
+/*
 
+## Raw Screen Buffer
+
+This grabs the raw buffer of pixels. Similar to wefx_draw, but instead
+of copying the data to a new array, this gets the raw data.
+
+*/
 unsigned int * wefx_get_buffer(void)
 {
     return buffer;
 }
-
 /*
 
 ## Get Screen Dimensions
@@ -294,11 +306,11 @@ size to be. These methods are exposed to Javascript to get the X
 and Y dimensions of the buffer / screen.
 
 */
-int wefx_xsize(void)
+EXPORT int wefx_xsize(void)
 {
     return w;
 }
-int wefx_ysize(void)
+EXPORT int wefx_ysize(void)
 {
     return h;
 }

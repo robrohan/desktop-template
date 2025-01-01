@@ -1,6 +1,11 @@
 #define RGFW_IMPLEMENTATION
+#ifndef RENDER_OPENGL
 #define RGFW_BUFFER
+#endif
 #include "RGFW.h"
+
+#define R2_MATHS_IMPLEMENTATION
+#include "r2_maths.h"
 
 #include "wefx.h"
 #include "3d.h"
@@ -14,14 +19,18 @@
 
 RGFW_area screenSize;
 
+#ifndef RENDER_OPENGL
 void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
 {
+    // we can use this to draw the raw pixels on a the raw window.
+    // RENDER_OPENGL needs to be off for this
     for (u32 y = 0; y < (u32)rect.h; y++)
     {
         u32 index = (rect.y + y) * (4 * screenSize.w) + rect.x * 4;
         memcpy(win->buffer + index, bitmap + (4 * rect.w * y), rect.w * 4 * sizeof(u8));
     }
 }
+#endif
 
 void integrate(state* state, f32 t, f32 dt)
 {
@@ -39,10 +48,15 @@ void render(state* state)
 
 int main(void)
 {
+#ifdef RENDER_OPENGL
+    // MacOS only supports really old gl from C
+    RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
+#endif
+
     RGFW_window *win = RGFW_createWindow(
         "Desktop Example",
         RGFW_RECT(0, 0, W, H),
-        RGFW_ALLOW_DND | RGFW_NO_GPU_RENDER); // | RGFW_NO_RESIZE);
+        RGFW_ALLOW_DND); // | RGFW_NO_GPU_RENDER); // | RGFW_NO_RESIZE);
 
     screenSize = RGFW_getScreenSize();
     printf("%dx%d\n", screenSize.w, screenSize.h);
@@ -57,6 +71,11 @@ int main(void)
     srand(9999991);
     /////
 
+#ifdef RENDER_OPENGL
+    glEnable(GL_TEXTURE_2D);
+    GLuint _tex;
+    glGenTextures(1, &_tex);
+#endif
 
     /////
     int w = 0;
@@ -145,6 +164,7 @@ int main(void)
         // receiving the time delta in terms of seconds will be more
         // intuitive than working with milliseconds
         // δ or Δ time
+        // https://www.gafferongames.com/post/fix_your_timestep/
         while(frame_time > 0.0)
         {
             float delta_time = MIN(frame_time, dt);
@@ -156,10 +176,49 @@ int main(void)
         // render
         render(&game_state);
 
-        // draw our framebuffer bitmap to the screen
-        RGFW_window_setGPURender(win, 0);
-        RGFW_window_swapBuffers(win);
+#ifdef RENDER_OPENGL
+        // glEnable(GL_BLEND);
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glViewport((GLint)0, (GLint)0, (GLint) win->r.w, (GLint)win->r.h);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0.0, 1.0, 1.0, 0.0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        glBindTexture(GL_TEXTURE_2D, _tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA8, W, H, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, (u8 *)wefx_get_buffer()
+        );
+
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(0, 0, 0);
+
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex3f(1, 0, 0);
+
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f(1, 1, 0);
+
+        glTexCoord2f(0.0f,1.0f);
+        glVertex3f(0, 1, 0);
+        glEnd();
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+#else
         draw_bitmap(win, (u8 *)wefx_get_buffer(), RGFW_RECT(0, 0, W, H));
+#endif
+
+        // draw our framebuffer bitmap to the screen
+        RGFW_window_setGPURender(win, 1);
+        RGFW_window_swapBuffers(win);
     }
 
     stbi_image_free(image);
