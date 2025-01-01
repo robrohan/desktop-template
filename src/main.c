@@ -176,11 +176,19 @@ int main(void)
         // render
         render(&game_state);
 
+        double scale = 1;
+#ifdef __APPLE__
+        scale = RGFW_getDisplayScaleFactor(win);
+#endif
+
 #ifdef RENDER_OPENGL
         // glEnable(GL_BLEND);
+        int scale_width = win->r.w * scale;
+        int scale_height = win->r.h * scale;
+
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-        glViewport((GLint)0, (GLint)0, (GLint) win->r.w, (GLint)win->r.h);
+        glViewport((GLint)0, (GLint)0, (GLint)scale_width, (GLint)scale_height);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
