@@ -52,12 +52,13 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
     f32 maxY = MAX(MAX(A.vec.y, B.vec.y), C.vec.y);
 
 #ifdef DEBUG_BOX_TRIANGLE
+    wefx_set_psize(1);
     wefx_color(0xff, 0xff, 0xff);
-    wefx_rect(minX, maxY, maxX, minY, 1);
+    wefx_rect(minX, maxY, maxX, minY);
 #endif
 
     wefx_set_psize(PIXEL_SIZE);
-    vertex SP = (vertex){ {0, 0}, 0, 0};
+    vertex SP = (vertex){ .vec={0, 0, 0, 1}, .u=0, .v=0};
     for (SP.vec.y = minY; SP.vec.y < maxY; SP.vec.y+=PIXEL_SIZE)
     {
         for (SP.vec.x = minX; SP.vec.x < maxX; SP.vec.x+=PIXEL_SIZE)
@@ -86,10 +87,10 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
                 f32 x_img = ((A.u * wA) + (B.u * wB) + (C.u * wG));
                 f32 y_img = ((A.v * wA) + (B.v * wB) + (C.v * wG));
 
-                ui32 pixx = (tex->w * x_img);
+                ui32 pixx = -(tex->w * x_img);
                 ui32 pixy = (tex->h * y_img);
 
-                i32 pix = (int) ((pixy * tex->w + pixx) * 3);
+                i32 pix = (int) ((pixx + pixy * tex->w) * 3);
                 ui8 r = tex->image[pix+0];
                 ui8 g = tex->image[pix+1];
                 ui8 b = tex->image[pix+2];
@@ -120,23 +121,24 @@ void draw_scene(mat4* screenM, state* state)
     vec4 A = {0};
     vec4 B = {0};
     vec4 C = {0};
-    mat4_transform(&state->ts->v[0].vec, screenM, &A);
-    mat4_transform(&state->ts->v[1].vec, screenM, &B);
-    mat4_transform(&state->ts->v[2].vec, screenM, &C);
+
+    mat4_transform(&state->entities.mesh[ID_PLAYER].tris->v[0].vec, screenM, &A);
+    mat4_transform(&state->entities.mesh[ID_PLAYER].tris->v[1].vec, screenM, &B);
+    mat4_transform(&state->entities.mesh[ID_PLAYER].tris->v[2].vec, screenM, &C);
     // printf("A: %f %f %f\n", A.x, A.y, A.z);
     // printf("B: %f %f %f\n", B.x, B.y, B.z);
     // printf("C: %f %f %f\n\n", C.x, C.y, C.z);
 
     triangle_fill(
-        (vertex){ .vec=A, .u=state->ts->v[0].u, .v=state->ts->v[0].v},
-        (vertex){ .vec=B, .u=state->ts->v[1].u, .v=state->ts->v[1].v},
-        (vertex){ .vec=C, .u=state->ts->v[2].u, .v=state->ts->v[2].v},
-        &state->ts->tex
+        (vertex){ .vec=A, .u=state->entities.mesh[ID_PLAYER].tris->v[0].u, .v=state->entities.mesh[ID_PLAYER].tris->v[0].v},
+        (vertex){ .vec=B, .u=state->entities.mesh[ID_PLAYER].tris->v[1].u, .v=state->entities.mesh[ID_PLAYER].tris->v[1].v},
+        (vertex){ .vec=C, .u=state->entities.mesh[ID_PLAYER].tris->v[2].u, .v=state->entities.mesh[ID_PLAYER].tris->v[2].v},
+        &state->entities.mesh[ID_PLAYER].material.tex
     );
 
     wefx_color(0xff, 0xff, 0xff);
 
-    vec4 P = {0, 0, 0, 1};
+    vec4 P = {{0, 0, 0, 1}};
     vec4 pt = {0};
     mat4_transform(&P, screenM, &pt);
     wefx_set_psize(4);

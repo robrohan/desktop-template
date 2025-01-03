@@ -34,9 +34,10 @@ void draw_bitmap(RGFW_window *win, u8 *bitmap, RGFW_rect rect)
 
 void integrate(state* state, f32 t, f32 dt)
 {
-    state->ts->v[2].vec.y = sin(t);
-    // state->ts->v[2].vec.x += 1 * dt;
-    // printf("%f %f %f %f\n", t, dt, sin(t), state->ts->v[2].vec.y);
+    // state->meshes->tris->v[2].vec.y = sin(t);
+    state->entities.mesh[ID_PLAYER].tris->v[2].vec.y = sin(t);
+
+    // state->meshes->tris->v[2].vec.x += 1 * dt;
 }
 
 void render(state* state)
@@ -83,25 +84,46 @@ int main(void)
     int w = 0;
     int h = 0;
     int channels = 0;
-    ui8* image = stbi_load("./assets/debug-diffuse-512.png", &w, &h, &channels, STBI_rgb);
+    ui8* image = stbi_load("./assets/8x8.png", &w, &h, &channels, STBI_rgb);
     printf("%dx%d %d\n", w, h, channels);
     /////
 
     //////////////////////////////////////////////
 
+    texture tex = {
+        .w = 8,
+        .h = 8,
+        .image = image
+    };
+    material material = { .tex=tex };
+
     triangle tris = {
         .v = {
-            { .vec={-1,  1, 0, 1},  0,  0 },
-            { .vec={ 1,  1, 0, 1},  0,  1 },
-            { .vec={ 0, -1, 0, 1}, .5, .5 }
-        },
-        .tex = {
-            .w = 512,
-            .h = 512,
-            .image = image
+            { .vec={ {-1,  1, 0, 1} },  .u=0,  .v=0 },
+            { .vec={ { 1,  1, 0, 1} },  .u=0,  .v=1 },
+            { .vec={ { 0, -1, 0, 1} },  .u=.5, .v=.5 }
         }
     };
-    state game_state = { .ts = &tris };
+
+    mesh mesh = {
+        .tris={ tris },
+        .material=material
+    };
+
+    entity player = { ID_PLAYER };
+
+    entities entities = {
+        .mesh={mesh},
+        .transform={{
+            .position={0, 0, 0},
+            .scale={1, 1, 1},
+            .rotation={0, 0, 0, 0}
+        }}
+    };
+
+    state game_state = {
+        .entities=entities
+    };
 
     //////////////////////////////////////////////
 
@@ -228,7 +250,7 @@ int main(void)
         // draw our framebuffer bitmap to the screen
         RGFW_window_setGPURender(win, 1);
         RGFW_window_swapBuffers(win);
-        // RGFW_window_checkFPS(win, 60);
+        RGFW_window_checkFPS(win, 60);
     }
 
     stbi_image_free(image);

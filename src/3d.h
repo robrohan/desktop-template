@@ -34,6 +34,11 @@ typedef uint8_t ui8;
 typedef float f32;
 typedef unsigned char ui8;
 
+#define MAX_ENTITIES 1
+#define MAX_MESH_TRIANGLES 10
+
+#define ID_PLAYER 0
+
 typedef struct vertex
 {
     vec4 vec;
@@ -49,16 +54,46 @@ typedef struct texture
     ui8* image;       //
 } texture;
 
+typedef struct material
+{
+    texture tex;
+} material;
+
 typedef struct triangle
 {
     vertex v[3];
-    texture tex;
 } triangle;
+
+typedef struct mesh
+{
+    triangle tris[MAX_MESH_TRIANGLES];
+    material material;
+} mesh;
+
+/////////////////////////////////
+
+typedef struct transform
+{
+    vec3 position;
+    vec3 scale;
+    quat rotation;
+} transform;
+
+typedef struct entities
+{
+    mesh mesh[MAX_ENTITIES];
+    transform transform[MAX_ENTITIES];
+} entities;
 
 typedef struct state
 {
-    triangle *ts;
+    entities entities;
 } state;
+
+typedef struct entity
+{
+    int id;
+} entity;
 
 ///////////////////////////////////////
 

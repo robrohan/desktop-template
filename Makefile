@@ -3,8 +3,8 @@
 CC:=gcc
 APP:=example
 
-PLATFORM:=Linux
-CPU=x86
+PLATFORM:=$(shell uname -s)
+CPU:=$(shell uname -m)
 
 C_ERRS += -Wall -Wextra -Wpedantic \
 		-Wformat=2 -Wno-unused-parameter -Wshadow \
@@ -80,9 +80,9 @@ run:
 		-DWEFX_NO_EXPORT \
 		-DWEFX_NO_MATH \
 		-DWEFX_ORIGIN_TOP_LEFT \
-		-DRENDER_OPENGL
+		-DRENDER_OPENGL \
+		-DDEBUG_BOX_TRIANGLE
 #		-DDEBUG_UV_TRIANGLE
-#		-DDEBUG_BOX_TRIANGLE
 
 # Do the actual build
 build:
