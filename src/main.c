@@ -51,10 +51,10 @@ void render(state* state)
 
 int main(void)
 {
-// #ifdef RENDER_OPENGL
-//     // MacOS only supports really old gl from C
-//     RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
-// #endif
+#ifdef RENDER_OPENGL
+    // MacOS only supports really old gl from C
+    RGFW_setGLVersion(RGFW_glCore, 2, 1);
+#endif
 
     RGFW_window *win = RGFW_createWindow(
         "Desktop Example",
