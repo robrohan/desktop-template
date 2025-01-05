@@ -107,7 +107,6 @@ int main(void)
 
     mesh mesh = {
         .tris={ tris },
-        .material=material
     };
 
     entity player = { ID_PLAYER };
@@ -118,7 +117,8 @@ int main(void)
             .position={0, 0, 0},
             .scale={1, 1, 1},
             .rotation={0, 0, 0, 0}
-        }}
+        }},
+        .material={material}
     };
 
     state game_state = {

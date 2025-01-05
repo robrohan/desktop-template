@@ -67,7 +67,6 @@ typedef struct triangle
 typedef struct mesh
 {
     triangle tris[MAX_MESH_TRIANGLES];
-    material material;
 } mesh;
 
 /////////////////////////////////
@@ -83,6 +82,7 @@ typedef struct entities
 {
     mesh mesh[MAX_ENTITIES];
     transform transform[MAX_ENTITIES];
+    material material[MAX_ENTITIES];
 } entities;
 
 typedef struct state

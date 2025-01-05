@@ -133,7 +133,7 @@ void draw_scene(mat4* screenM, state* state)
         (vertex){ .vec=A, .u=state->entities.mesh[ID_PLAYER].tris->v[0].u, .v=state->entities.mesh[ID_PLAYER].tris->v[0].v},
         (vertex){ .vec=B, .u=state->entities.mesh[ID_PLAYER].tris->v[1].u, .v=state->entities.mesh[ID_PLAYER].tris->v[1].v},
         (vertex){ .vec=C, .u=state->entities.mesh[ID_PLAYER].tris->v[2].u, .v=state->entities.mesh[ID_PLAYER].tris->v[2].v},
-        &state->entities.mesh[ID_PLAYER].material.tex
+        &state->entities.material[ID_PLAYER].tex
     );
 
     wefx_color(0xff, 0xff, 0xff);

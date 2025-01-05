@@ -37,7 +37,6 @@ ifeq ($(PLATFORM),Darwin)
 		-framework Foundation \
 		-framework AppKit \
 		-framework OpenGL \
-		-framework CoreVideo \
 		-framework IOKit \
 		-mshstk \
 		$(STATIC)
