@@ -51,10 +51,10 @@ void render(state* state)
 
 int main(void)
 {
-#ifdef RENDER_OPENGL
-    // MacOS only supports really old gl from C
-    RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
-#endif
+// #ifdef RENDER_OPENGL
+//     // MacOS only supports really old gl from C
+//     RGFW_setGLVersion(RGFW_GL_CORE, 2, 1);
+// #endif
 
     RGFW_window *win = RGFW_createWindow(
         "Desktop Example",
@@ -159,12 +159,12 @@ int main(void)
                 //     win->event.point.x, win->event.point.y);
                 break;
             case RGFW_keyPressed:
-                printf("pressed: %d\n", win->event.keyCode);
+                printf("pressed: %d\n", win->event.key);
                 if (RGFW_isPressed(win, RGFW_Space))
                     printf("fps : %i\n", RGFW_window_checkFPS(win, 0));
                 break;
             case RGFW_keyReleased:
-                printf("released: %d\n", win->event.keyCode);
+                printf("released: %d\n", win->event.key);
                 break;
             case RGFW_dnd_init:
                 printf("drop started at %dx%d\n",
@@ -200,8 +200,10 @@ int main(void)
         render(&game_state);
 
         double scale = 1;
+
 #ifdef __APPLE__
-        scale = RGFW_getDisplayScaleFactor(win);
+    RGFW_monitor monitor = RGFW_window_getMonitor(win);
+    scale = monitor.pixelRatio;
 #endif
 
 #ifdef RENDER_OPENGL
