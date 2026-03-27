@@ -78,9 +78,9 @@ int main(void)
     entities entities = {
         .mesh={mesh},
         .transform={{
-            .position={0, 0, 0},
-            .scale={1, 1, 1},
-            .rotation={0, 0, 0, 0}
+            .position={{0, 0, 0}},
+            .scale={{1, 1, 1}},
+            .rotation={{0, 0, 0, 0}}
         }},
         .material={material}
     };
