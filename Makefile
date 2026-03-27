@@ -63,6 +63,7 @@ dummy:
 	@echo "make clean clean_libs    - "
 	@echo "make fetch               - "
 	@echo "make libs                - "
+	@echo "make test                - run unit tests"
 	@echo "make run                 - debug"
 	@echo "make build               - release"
 
@@ -82,6 +83,22 @@ clean_libs:
 
 clean:
 	rm -rf ./build
+
+test:
+	mkdir -p ./build/$(PLATFORM)/$(CPU)/
+	$(CC) -std=$(STD) -Wall -Wextra \
+		tests/test_wefx.c \
+		-isystem ./vendor/ -I./src/ \
+		-o build/$(PLATFORM)/$(CPU)/test_wefx \
+		-DWEFX_NO_WALLOC -DWEFX_NO_EXPORT -DWEFX_NO_MATH -DWEFX_ORIGIN_TOP_LEFT \
+		&& ./build/$(PLATFORM)/$(CPU)/test_wefx
+	$(CC) -std=$(STD) -Wall -Wextra \
+		tests/test_3d.c \
+		-isystem ./vendor/ -I./src/ \
+		-o build/$(PLATFORM)/$(CPU)/test_3d \
+		-DWEFX_NO_WALLOC -DWEFX_NO_EXPORT -DWEFX_NO_MATH -DWEFX_ORIGIN_TOP_LEFT \
+		-lm \
+		&& ./build/$(PLATFORM)/$(CPU)/test_3d
 
 convert:
 	convert -resize 8x8 \
