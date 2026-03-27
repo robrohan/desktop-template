@@ -60,7 +60,9 @@ ifeq ($(PLATFORM),Linux)
 endif
 
 dummy:
-	@echo "You probably want: make build, or make fetch"
+	@echo "make clean clean_libs"
+	@echo "make fetch"
+	@echo "make libs"
 
 fetch:
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
@@ -71,6 +73,9 @@ libs:
 	cd ./vendor/raylib/src && make PLATFORM=PLATFORM_DESKTOP
 	mkdir -p ./libs/$(PLATFORM)/$(CPU)/
 	cp ./vendor/raylib/src/libraylib.a ./libs/$(PLATFORM)/$(CPU)/
+
+clean_libs:
+	rm -rf libs
 
 clean:
 	rm -rf ./build
