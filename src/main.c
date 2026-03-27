@@ -26,7 +26,6 @@ void render(state* state)
 
 int main(void)
 {
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(W, H, "Desktop Example");
     SetTargetFPS(60);
 
@@ -49,6 +48,7 @@ int main(void)
 
     /////
     Image sprite = LoadImage("./assets/8x8.png");
+    ImageFormat(&sprite, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
     printf("%dx%d\n", sprite.width, sprite.height);
     /////
 
@@ -137,7 +137,7 @@ int main(void)
 
         // blit cpu buffer to screen via texture
         Rectangle src = {0, 0, W, H};
-        Rectangle dst = {0, 0, GetRenderWidth(), GetRenderHeight()};
+        Rectangle dst = {0, 0, W, H};
         Vector2 origin = {0, 0};
 
         UpdateTexture(tex, wefx_get_buffer());
