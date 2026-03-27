@@ -67,6 +67,7 @@ dummy:
 	@echo "make build               - release"
 
 fetch:
+	curl https://raw.githubusercontent.com/robrohan/r2/refs/heads/main/r2_unit.h > ./vendor/r2_unit.h
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
 	curl https://raw.githubusercontent.com/robrohan/r2/refs/heads/main/r2_maths.h > ./vendor/r2_maths.h
 	[ -d ./vendor/raylib ] || (curl -L https://github.com/raysan5/raylib/archive/refs/tags/5.5.zip -o /tmp/raylib.zip && unzip -q /tmp/raylib.zip -d /tmp/ && mv /tmp/raylib-5.5 ./vendor/raylib && rm /tmp/raylib.zip)
