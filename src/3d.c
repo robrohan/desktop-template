@@ -178,10 +178,10 @@ mat4 make_screenSpaceTransform(float hW, float hH)
 
     mat4 out = {0};
     // clang-format off
-    out.m00 = hW;  out.m10 = 0;   out.m20 = 0;  out.m30 = hW;
-    out.m01 = 0;   out.m11 = -hH;  out.m21 = 0;  out.m31 = hH;
+    out.m00 = hW;  out.m10 = 0;   out.m20 = 0;  out.m30 = 0;
+    out.m01 = 0;   out.m11 = -hH; out.m21 = 0;  out.m31 = 0;
     out.m02 = 0;   out.m12 = 0;   out.m22 = 1;  out.m32 = 0;
-    out.m03 = 0;   out.m13 = 0;   out.m23 = 0;  out.m33 = 1;
+    out.m03 = hW;  out.m13 = hH;  out.m23 = 0;  out.m33 = 1;
     // clang-format on
     return out;
 }
