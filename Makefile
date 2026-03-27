@@ -60,9 +60,11 @@ ifeq ($(PLATFORM),Linux)
 endif
 
 dummy:
-	@echo "make clean clean_libs"
-	@echo "make fetch"
-	@echo "make libs"
+	@echo "make clean clean_libs    - "
+	@echo "make fetch               - "
+	@echo "make libs                - "
+	@echo "make run                 - debug"
+	@echo "make build               - release"
 
 fetch:
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
