@@ -18,9 +18,9 @@
        A
   (to prevent edge overdraw)
 */
-i8 is_top_left(vec2 *s, vec2 *e)
+i8 is_top_left(vec4 *s, vec4 *e)
 {
-    vec2 edge = { e->x - s->x, e->y - s->y};
+    vec2 edge = {{ e->x - s->x, e->y - s->y }};
     return (edge.y == 0 && edge.x > 0) || edge.y > 0;
 }
 
@@ -35,7 +35,7 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
 {
     // Calculate the edge function for the whole triangle (ABC)
     // pointing towards the center basically
-    f32 ABC = vec2_edge_cross(&A.vec, &B.vec, &C.vec);
+    f32 ABC = vec2_edge_cross((vec2*)&A.vec, (vec2*)&B.vec, (vec2*)&C.vec);
     if(ABC < 0) {
          return;
     }
@@ -58,14 +58,14 @@ void triangle_fill(vertex A, vertex B, vertex C, const texture* tex)
 #endif
 
     wefx_set_psize(PIXEL_SIZE);
-    vertex SP = (vertex){ .vec={0, 0, 0, 1}, .u=0, .v=0};
+    vertex SP = (vertex){ .vec={{0, 0, 0, 1}}, .u=0, .v=0};
     for (SP.vec.y = minY; SP.vec.y < maxY; SP.vec.y+=PIXEL_SIZE)
     {
         for (SP.vec.x = minX; SP.vec.x < maxX; SP.vec.x+=PIXEL_SIZE)
         {
-            f32 AB_P = vec2_edge_cross(&A.vec, &B.vec, &SP.vec) + bias0;
-            f32 BC_P = vec2_edge_cross(&B.vec, &C.vec, &SP.vec) + bias1;
-            f32 CA_P = vec2_edge_cross(&C.vec, &A.vec, &SP.vec) + bias2;
+            f32 AB_P = vec2_edge_cross((vec2*)&A.vec, (vec2*)&B.vec, (vec2*)&SP.vec) + bias0;
+            f32 BC_P = vec2_edge_cross((vec2*)&B.vec, (vec2*)&C.vec, (vec2*)&SP.vec) + bias1;
+            f32 CA_P = vec2_edge_cross((vec2*)&C.vec, (vec2*)&A.vec, (vec2*)&SP.vec) + bias2;
 
             // Our graphics system has 0,0 on the bottom left not the
             // top right
@@ -178,10 +178,10 @@ mat4 make_screenSpaceTransform(float hW, float hH)
 
     mat4 out = {0};
     // clang-format off
-    out.m00 = hW;  out.m10 = 0;   out.m20 = 0;  out.m30 = hW;
-    out.m01 = 0;   out.m11 = -hH;  out.m21 = 0;  out.m31 = hH;
+    out.m00 = hW;  out.m10 = 0;   out.m20 = 0;  out.m30 = 0;
+    out.m01 = 0;   out.m11 = -hH; out.m21 = 0;  out.m31 = 0;
     out.m02 = 0;   out.m12 = 0;   out.m22 = 1;  out.m32 = 0;
-    out.m03 = 0;   out.m13 = 0;   out.m23 = 0;  out.m33 = 1;
+    out.m03 = hW;  out.m13 = hH;  out.m23 = 0;  out.m33 = 1;
     // clang-format on
     return out;
 }

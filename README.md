@@ -23,12 +23,12 @@ Actions. See `build.yml` for more details.
 ## Header Libraries used and Included
 
 This project has "no dependencies[^1]", the OS windowing / drawing context is done
-by the included RGFW library, and audio can be done using the Miniaudio library:
+by raylib, and audio can be done using the Miniaudio library:
 
-- https://github.com/ColleagueRiley/RGFW
+- https://github.com/raysan5/raylib
 - https://miniaud.io/
 
-They can be found in the vendor directory.
+Run `make fetch && make libs` to download and build the vendor dependencies.
 
 [^1]: It needs libraries provided by the OS to create windows, and drawing contexts
 but you shouldn't need to install them
