@@ -1,0 +1,201 @@
+name: Build Desktop Template
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  linux:
+    permissions:
+      contents: write
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        bits: [64]
+        include:
+        - bits: 64
+          ARCH: "x86_64"
+          ARCH_NAME: "amd64"
+          COMPILER_PATH: "/user/bin"
+          
+    env:
+      APP: example
+      PLATFORM: Linux
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+      
+    - name: Setup Environment
+      run: | 
+        sudo apt-get update -qq
+        sudo apt-get install gcc-multilib
+        sudo apt-get install -y --no-install-recommends \
+          libx11-dev mesa-common-dev \
+          libglx-dev \
+          libxcursor-dev \
+          mesa-vulkan-drivers \
+          libxcursor-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxi-dev \
+          libxext-dev \
+          libxfixes-dev \
+          libwayland-dev \
+          libxkbcommon-dev \
+          libgles2-mesa-dev
+      
+    - name: Build Raylib
+      run: make libs
+      if: matrix.bits == 64
+
+    - name: Build Library
+      run: |
+        make build
+      if: matrix.bits == 64
+    
+    - name: Generate Artifacts
+      run: |
+        cd build
+        tar -czvf ${{ env.PLATFORM }}.tar.gz ./${{ env.PLATFORM }}
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PLATFORM }}.tar.gz
+        path: ./build/${{ env.PLATFORM }}.tar.gz
+        
+    # - name: Upload Artifact to Release
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     files: ./build/${{ env.PLATFORM }}.tar.gz
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  darwin:
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    
+    env:
+      PLATFORM: Darwin
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
+    - name: Build Raylib (x86_64)
+      run: |
+        cd ./vendor/raylib/src
+        make PLATFORM=PLATFORM_DESKTOP CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        mkdir -p ../../../libs/Darwin/x86_64/
+        cp libraylib.a ../../../libs/Darwin/x86_64/
+        rm -f *.o
+
+    - name: Build Raylib (arm64)
+      run: |
+        cd ./vendor/raylib/src
+        make PLATFORM=PLATFORM_DESKTOP CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION"
+        mkdir -p ../../../libs/Darwin/arm64/
+        cp libraylib.a ../../../libs/Darwin/arm64/
+
+    - name: Build Library
+      run: |
+        clang --version
+
+        make build \
+          CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" \
+          PLATFORM=${{env.PLATFORM}} CPU=x86_64 EXT=.x86
+
+        make build \
+          CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" \
+          PLATFORM=${{env.PLATFORM}} CPU=arm64 EXT=.arm64
+
+    - name: Generate Artifacts
+      run: |
+        cd build
+        tar -czvf ${{ env.PLATFORM }}.tar.gz ./${{ env.PLATFORM }}
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PLATFORM }}.tar.gz
+        path: ./build/${{ env.PLATFORM }}.tar.gz
+        
+    # - name: Upload Artifact to Release
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     files: ./build/${{ env.PLATFORM }}.tar.gz
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        compiler: [mingw-w64]
+        bits: [64]
+        include:
+        - compiler: mingw-w64
+          bits: 64
+          ARCH: "x86_64"
+          WINDRES_ARCH: pe-x86-64
+
+    env:
+      PLATFORM: Windows
+      GNUTARGET: default
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    # Setup MSBuild.exe path if required
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+      if: matrix.compiler == 'msvc16'
+
+    - name: Build Raylib
+      run: make libs PLATFORM=${{env.PLATFORM}}
+      shell: cmd
+      if: |
+        matrix.compiler == 'mingw-w64' &&
+        matrix.bits == 64
+
+    - name: Build Library (MinGW-w64 64bit)
+      run: |
+        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
+        windres.exe --version
+        dir C:\msys64\mingw64\bin
+        make build PLATFORM=${{env.PLATFORM}} EXT=.exe
+      shell: cmd
+      if: |
+        matrix.compiler == 'mingw-w64' &&
+        matrix.bits == 64
+
+    - name: Generate Artifacts
+      run: |
+        cd build
+        7z a ./${{ env.PLATFORM }}.zip ./${{ env.PLATFORM }}
+        dir
+      shell: cmd
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PLATFORM }}.zip
+        path: ./build/${{ env.PLATFORM }}.zip
+
+    # - name: Upload Artifact to Release
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     files: ./build/${{ env.PLATFORM }}.zip
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
