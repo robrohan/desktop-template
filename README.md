@@ -23,9 +23,11 @@ Actions. See `build.yml` for more details.
 ## Header Libraries used and Included
 
 This project has "no dependencies[^1]", the OS windowing / drawing context is done
-by the included RGFW library, and audio can be done using the Miniaudio library:
+by the raylib library, the GUI is done with Nuklear, and audio can be done using
+the Miniaudio library:
 
-- https://github.com/ColleagueRiley/RGFW
+- https://github.com/raysan5/raylib
+- https://github.com/Immediate-Mode-UI/Nuklear
 - https://miniaud.io/
 
 They can be found in the vendor directory.

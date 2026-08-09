@@ -16,6 +16,9 @@ STD:=c99
 FILES:=src/main.c
 EXT:=
 
+RAYLIB_INCLUDE:=./vendor/raylib/src
+RAYLIB_LIB:=./vendor/raylib/raylib/src
+
 # Windows mignw32 needs static
 STATIC:=
 ifeq ($(CC),x86_64-w64-mingw32-gcc)
@@ -24,29 +27,35 @@ endif
 
 ifeq ($(PLATFORM),Windows)
 	LIBS := -ggdb \
-		-lshell32 \
-		-lwinmm \
+		-L$(RAYLIB_LIB) \
+		-lraylib \
 		-lgdi32 \
+		-lwinmm \
 		-lopengl32 \
 		-mwindows \
 		-mshstk \
 		$(STATIC)
 endif
 ifeq ($(PLATFORM),Darwin)
-	LIBS := -lm \
-		-framework Foundation \
-		-framework AppKit \
+	LIBS := -L$(RAYLIB_LIB) \
+		-lraylib \
+		-lm \
 		-framework OpenGL \
+		-framework Cocoa \
 		-framework IOKit \
+		-framework CoreAudio \
+		-framework CoreVideo \
 		$(STATIC)
 endif
 ifeq ($(PLATFORM),Linux)
-	LIBS := -lXrandr \
-		-lX11 \
-		-lm \
+	LIBS := -L$(RAYLIB_LIB) \
+		-lraylib \
 		-lGL \
-		-ldl \
+		-lm \
 		-lpthread \
+		-ldl \
+		-lrt \
+		-lX11 \
 		-D_POSIX_C_SOURCE=200112L \
 		-mshstk \
 		$(STATIC)
@@ -56,7 +65,6 @@ dummy:
 	@echo "You probably want: make build, or make fetch"
 
 fetch:
-#	curl https://raw.githubusercontent.com/ColleagueRiley/RGFW/refs/heads/main/RGFW.h > ./vendor/RGFW.h
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
 	curl https://raw.githubusercontent.com/Immediate-Mode-UI/Nuklear/refs/heads/master/nuklear.h > ./vendor/nuklear.h
 
@@ -74,6 +82,7 @@ run:
 	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) -ggdb -std=$(STD) \
 		$(FILES) \
 		-I./vendor/ \
+		-I$(RAYLIB_INCLUDE) \
 		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
 		$(LIBS) \
 		-DWEFX_NO_WALLOC \
@@ -90,6 +99,7 @@ build:
 	$(CC) $(CUSTOM_CFLAGS) $(C_ERRS) $(CFLAGS) -std=$(STD) \
 		$(FILES) \
 		-I./vendor/ \
+		-I$(RAYLIB_INCLUDE) \
 		-o build/$(PLATFORM)/$(CPU)/$(APP)$(EXT) \
 		$(LIBS) \
 		-DNDEBUG \
