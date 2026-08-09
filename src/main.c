@@ -5,25 +5,23 @@
 #include <string.h>
 
 #define NK_INCLUDE_FIXED_TYPES
-#define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS
 #define NK_INCLUDE_DEFAULT_ALLOCATOR
-#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
-#define NK_INCLUDE_FONT_BAKING
-#define NK_INCLUDE_DEFAULT_FONT
-// raylib's rtext.c already links in a non-static stb_rect_pack implementation
-// (its stb_truetype copy is static, so nuklear still needs to bring its own)
-#define NK_NO_STB_RECT_PACK_IMPLEMENTATION
 #define NK_IMPLEMENTATION
 #include "nuklear.h"
 
-// vertex format nuklear will pack its draw output into
-struct nk_raylib_vertex
+// lets nuklear measure text the same way we're about to draw it,
+// so layout (button/label sizing) matches what actually renders
+static float nk_raylib_text_width(nk_handle handle, float height, const char *text, int len)
 {
-    float position[2];
-    float uv[2];
-    unsigned char color[4];
-};
+    const Font *font = (const Font *)handle.ptr;
+    char buf[256];
+    if (len < 0) len = 0;
+    if (len >= (int)sizeof(buf)) len = (int)sizeof(buf) - 1;
+    memcpy(buf, text, (size_t)len);
+    buf[len] = '\0';
+    return MeasureTextEx(*font, buf, height, 0.0f).x;
+}
 
 static void nk_raylib_input(struct nk_context *ctx)
 {
@@ -55,70 +53,191 @@ static void nk_raylib_input(struct nk_context *ctx)
     nk_input_end(ctx);
 }
 
-// converts the queued nuklear draw commands into vertices and
-// submits them through raylib's low level rlgl drawing layer
-static void nk_raylib_render(struct nk_context *ctx, const struct nk_draw_null_texture *nullTexture)
+static inline Color nk_raylib_color(struct nk_color c)
 {
-    static const struct nk_draw_vertex_layout_element vertexLayout[] = {
-        {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_raylib_vertex, position)},
-        {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_raylib_vertex, uv)},
-        {NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF(struct nk_raylib_vertex, color)},
-        {NK_VERTEX_LAYOUT_END}
-    };
+    return (Color){ c.r, c.g, c.b, c.a };
+}
 
-    struct nk_convert_config config;
-    memset(&config, 0, sizeof(config));
-    config.vertex_layout = vertexLayout;
-    config.vertex_size = sizeof(struct nk_raylib_vertex);
-    config.vertex_alignment = NK_ALIGNOF(struct nk_raylib_vertex);
-    config.tex_null = *nullTexture;
-    config.circle_segment_count = 22;
-    config.curve_segment_count = 22;
-    config.arc_segment_count = 22;
-    config.global_alpha = 1.0f;
-    config.shape_AA = NK_ANTI_ALIASING_ON;
-    config.line_AA = NK_ANTI_ALIASING_ON;
+static inline Vector2 nk_raylib_vec2i(struct nk_vec2i v)
+{
+    return (Vector2){ (float)v.x, (float)v.y };
+}
 
-    struct nk_buffer cmds, verts, idx;
-    nk_buffer_init_default(&cmds);
-    nk_buffer_init_default(&verts);
-    nk_buffer_init_default(&idx);
-    nk_convert(ctx, &cmds, &verts, &idx, &config);
-
-    const struct nk_raylib_vertex *vertices = (const struct nk_raylib_vertex *)nk_buffer_memory_const(&verts);
-    const nk_draw_index *offset = (const nk_draw_index *)nk_buffer_memory_const(&idx);
-
-    const struct nk_draw_command *cmd;
-    nk_draw_foreach(cmd, ctx, &cmds)
+// walks nuklear's queued draw commands and dispatches each one straight to
+// raylib's own (well tested) drawing functions, instead of hand rolling a
+// textured-triangle renderer: raylib's text/shape pipeline is what draws
+// correctly, so let it do the actual work
+static void nk_raylib_render(struct nk_context *ctx)
+{
+    const struct nk_command *cmd;
+    nk_foreach(cmd, ctx)
     {
-        if (!cmd->elem_count)
+        switch (cmd->type)
         {
-            continue;
+            case NK_COMMAND_NOP: break;
+
+            case NK_COMMAND_SCISSOR:
+            {
+                const struct nk_command_scissor *s = (const struct nk_command_scissor *)cmd;
+                EndScissorMode();
+                BeginScissorMode(s->x, s->y, (int)s->w, (int)s->h);
+                break;
+            }
+
+            case NK_COMMAND_LINE:
+            {
+                const struct nk_command_line *l = (const struct nk_command_line *)cmd;
+                DrawLineEx(nk_raylib_vec2i(l->begin), nk_raylib_vec2i(l->end),
+                    (float)l->line_thickness, nk_raylib_color(l->color));
+                break;
+            }
+
+            case NK_COMMAND_CURVE:
+            {
+                const struct nk_command_curve *q = (const struct nk_command_curve *)cmd;
+                Vector2 points[4] = {
+                    nk_raylib_vec2i(q->begin), nk_raylib_vec2i(q->ctrl[0]),
+                    nk_raylib_vec2i(q->ctrl[1]), nk_raylib_vec2i(q->end)
+                };
+                DrawSplineBezierCubic(points, 4, (float)q->line_thickness, nk_raylib_color(q->color));
+                break;
+            }
+
+            case NK_COMMAND_RECT:
+            {
+                const struct nk_command_rect *r = (const struct nk_command_rect *)cmd;
+                Rectangle rec = { (float)r->x, (float)r->y, (float)r->w, (float)r->h };
+                if (r->rounding > 0)
+                {
+                    float roundness = (2.0f * r->rounding) / (float)(rec.width < rec.height ? rec.width : rec.height);
+                    DrawRectangleRoundedLinesEx(rec, roundness, 8, (float)r->line_thickness, nk_raylib_color(r->color));
+                }
+                else
+                {
+                    DrawRectangleLinesEx(rec, (float)r->line_thickness, nk_raylib_color(r->color));
+                }
+                break;
+            }
+
+            case NK_COMMAND_RECT_FILLED:
+            {
+                const struct nk_command_rect_filled *r = (const struct nk_command_rect_filled *)cmd;
+                Rectangle rec = { (float)r->x, (float)r->y, (float)r->w, (float)r->h };
+                if (r->rounding > 0)
+                {
+                    float roundness = (2.0f * r->rounding) / (float)(rec.width < rec.height ? rec.width : rec.height);
+                    DrawRectangleRounded(rec, roundness, 8, nk_raylib_color(r->color));
+                }
+                else
+                {
+                    DrawRectangleRec(rec, nk_raylib_color(r->color));
+                }
+                break;
+            }
+
+            case NK_COMMAND_RECT_MULTI_COLOR:
+            {
+                const struct nk_command_rect_multi_color *r = (const struct nk_command_rect_multi_color *)cmd;
+                Rectangle rec = { (float)r->x, (float)r->y, (float)r->w, (float)r->h };
+                DrawRectangleGradientEx(rec, nk_raylib_color(r->left), nk_raylib_color(r->bottom),
+                    nk_raylib_color(r->right), nk_raylib_color(r->top));
+                break;
+            }
+
+            case NK_COMMAND_CIRCLE:
+            {
+                const struct nk_command_circle *c = (const struct nk_command_circle *)cmd;
+                DrawEllipseLines(c->x + c->w / 2, c->y + c->h / 2, c->w / 2.0f, c->h / 2.0f, nk_raylib_color(c->color));
+                break;
+            }
+
+            case NK_COMMAND_CIRCLE_FILLED:
+            {
+                const struct nk_command_circle_filled *c = (const struct nk_command_circle_filled *)cmd;
+                DrawEllipse(c->x + c->w / 2, c->y + c->h / 2, c->w / 2.0f, c->h / 2.0f, nk_raylib_color(c->color));
+                break;
+            }
+
+            case NK_COMMAND_ARC:
+            {
+                const struct nk_command_arc *a = (const struct nk_command_arc *)cmd;
+                DrawRingLines((Vector2){ (float)a->cx, (float)a->cy }, (float)a->r, (float)a->r,
+                    a->a[0] * RAD2DEG, a->a[1] * RAD2DEG, 32, nk_raylib_color(a->color));
+                break;
+            }
+
+            case NK_COMMAND_ARC_FILLED:
+            {
+                const struct nk_command_arc_filled *a = (const struct nk_command_arc_filled *)cmd;
+                DrawRing((Vector2){ (float)a->cx, (float)a->cy }, 0.0f, (float)a->r,
+                    a->a[0] * RAD2DEG, a->a[1] * RAD2DEG, 32, nk_raylib_color(a->color));
+                break;
+            }
+
+            case NK_COMMAND_TRIANGLE:
+            {
+                const struct nk_command_triangle *t = (const struct nk_command_triangle *)cmd;
+                DrawTriangleLines(nk_raylib_vec2i(t->a), nk_raylib_vec2i(t->b), nk_raylib_vec2i(t->c), nk_raylib_color(t->color));
+                break;
+            }
+
+            case NK_COMMAND_TRIANGLE_FILLED:
+            {
+                const struct nk_command_triangle_filled *t = (const struct nk_command_triangle_filled *)cmd;
+                DrawTriangle(nk_raylib_vec2i(t->a), nk_raylib_vec2i(t->b), nk_raylib_vec2i(t->c), nk_raylib_color(t->color));
+                break;
+            }
+
+            case NK_COMMAND_POLYGON:
+            case NK_COMMAND_POLYLINE:
+            {
+                const struct nk_command_polygon *p = (const struct nk_command_polygon *)cmd;
+                for (int i = 0; i < p->point_count - 1; i++)
+                {
+                    DrawLineEx(nk_raylib_vec2i(p->points[i]), nk_raylib_vec2i(p->points[i + 1]),
+                        (float)p->line_thickness, nk_raylib_color(p->color));
+                }
+                if (cmd->type == NK_COMMAND_POLYGON && p->point_count > 1)
+                {
+                    DrawLineEx(nk_raylib_vec2i(p->points[p->point_count - 1]), nk_raylib_vec2i(p->points[0]),
+                        (float)p->line_thickness, nk_raylib_color(p->color));
+                }
+                break;
+            }
+
+            case NK_COMMAND_POLYGON_FILLED:
+            {
+                const struct nk_command_polygon_filled *p = (const struct nk_command_polygon_filled *)cmd;
+                Vector2 fan[64];
+                int count = p->point_count < 64 ? p->point_count : 64;
+                for (int i = 0; i < count; i++) fan[i] = nk_raylib_vec2i(p->points[i]);
+                DrawTriangleFan(fan, count, nk_raylib_color(p->color));
+                break;
+            }
+
+            case NK_COMMAND_TEXT:
+            {
+                const struct nk_command_text *t = (const struct nk_command_text *)cmd;
+                const Font *font = (const Font *)t->font->userdata.ptr;
+                DrawRectangle(t->x, t->y, t->w, t->h, nk_raylib_color(t->background));
+                DrawTextEx(*font, t->string, (Vector2){ (float)t->x, (float)t->y }, t->height, 0.0f, nk_raylib_color(t->foreground));
+                break;
+            }
+
+            case NK_COMMAND_IMAGE:
+            {
+                const struct nk_command_image *img = (const struct nk_command_image *)cmd;
+                Texture2D tex = { .id = (unsigned int)img->img.handle.id, .width = img->img.w, .height = img->img.h, .mipmaps = 1, .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+                DrawTexturePro(tex, (Rectangle){ 0, 0, (float)img->img.w, (float)img->img.h },
+                    (Rectangle){ (float)img->x, (float)img->y, (float)img->w, (float)img->h },
+                    (Vector2){ 0, 0 }, 0.0f, nk_raylib_color(img->col));
+                break;
+            }
+
+            default: break;
         }
-
-        BeginScissorMode((int)cmd->clip_rect.x, (int)cmd->clip_rect.y,
-            (int)cmd->clip_rect.w, (int)cmd->clip_rect.h);
-
-        rlSetTexture((unsigned int)cmd->texture.id);
-        rlBegin(RL_TRIANGLES);
-        for (unsigned int i = 0; i < cmd->elem_count; i++)
-        {
-            const struct nk_raylib_vertex *v = &vertices[offset[i]];
-            rlColor4ub(v->color[0], v->color[1], v->color[2], v->color[3]);
-            rlTexCoord2f(v->uv[0], v->uv[1]);
-            rlVertex2f(v->position[0], v->position[1]);
-        }
-        rlEnd();
-        rlSetTexture(0);
-
-        EndScissorMode();
-
-        offset += cmd->elem_count;
     }
-
-    nk_buffer_free(&cmds);
-    nk_buffer_free(&verts);
-    nk_buffer_free(&idx);
+    EndScissorMode();
     nk_clear(ctx);
 }
 
@@ -129,11 +248,6 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "example");
 
-    // raylib enables backface culling by default; our top-down ortho
-    // projection flips triangle winding, and nuklear doesn't wind its
-    // geometry to match, so half of every shape would get culled
-    rlDisableBackfaceCulling();
-
     const int monitor = GetCurrentMonitor();
     SetWindowPosition((GetMonitorWidth(monitor) - screenWidth) / 2, (GetMonitorHeight(monitor) - screenHeight) / 2);
 
@@ -141,33 +255,24 @@ int main(void)
 
     //////////////////////////////////////
     /* init gui state */
-    struct nk_font_atlas atlas;
-    nk_font_atlas_init_default(&atlas);
-    nk_font_atlas_begin(&atlas);
-    struct nk_font *font = nk_font_atlas_add_default(&atlas, 16.0f, NULL);
+    bool customFont = FileExists("assets/Charcoal.ttf");
+    Font uiFont = customFont ? LoadFontEx("assets/Charcoal.ttf", 13, NULL, 0) : GetFontDefault();
+    SetTextureFilter(uiFont.texture, TEXTURE_FILTER_POINT);
 
-    int fontWidth = 0;
-    int fontHeight = 0;
-    const void *fontPixels = nk_font_atlas_bake(&atlas, &fontWidth, &fontHeight, NK_FONT_ATLAS_RGBA32);
-
-    Image fontImage = {
-        .data = (void *)fontPixels,
-        .width = fontWidth,
-        .height = fontHeight,
-        .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
-    };
-    Texture2D fontTexture = LoadTextureFromImage(fontImage);
-
-    struct nk_draw_null_texture nullTexture;
-    nk_font_atlas_end(&atlas, nk_handle_id((int)fontTexture.id), &nullTexture);
+    struct nk_user_font nkFont;
+    nk_zero_struct(nkFont);
+    nkFont.userdata = nk_handle_ptr(&uiFont);
+    nkFont.height = (float)uiFont.baseSize;
+    nkFont.width = nk_raylib_text_width;
 
     struct nk_context ctx;
-    nk_init_default(&ctx, &font->handle);
+    nk_init_default(&ctx, &nkFont);
 
     enum {EASY, HARD};
     int op = EASY;
     float value = 0.6f;
+
+    struct nk_rect triangleRegion = nk_rect(320, 50, 320, 280);
     //////////////////////////////////////
 
     while (!WindowShouldClose())
@@ -209,28 +314,38 @@ int main(void)
         }
         nk_end(&ctx);
 
+        struct nk_rect triangleContent = triangleRegion;
+        if (nk_begin(&ctx, "Triangle", triangleRegion, NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_TITLE)) {
+            triangleContent = nk_window_get_content_region(&ctx);
+        }
+        nk_end(&ctx);
+
         BeginDrawing();
         ClearBackground(WHITE);
 
+        // window chrome first, so the triangle draws on top of it
+        nk_raylib_render(&ctx);
+
         // a simple gradient triangle, drawn through raylib's rlgl layer
-        // so we get per-vertex colors like the old raw OpenGL version did
+        // so we get per-vertex colors like the old raw OpenGL version did,
+        // clipped and fitted inside the "Triangle" window's content area
+        BeginScissorMode((int)triangleContent.x, (int)triangleContent.y,
+            (int)triangleContent.w, (int)triangleContent.h);
         rlBegin(RL_TRIANGLES);
             rlColor3f(1.0f, 0.0f, 0.0f);
-            rlVertex2f(160.0f, 450.0f);
+            rlVertex2f(triangleContent.x + triangleContent.w * 0.1f, triangleContent.y + triangleContent.h * 0.9f);
             rlColor3f(0.0f, 1.0f, 0.0f);
-            rlVertex2f(640.0f, 450.0f);
+            rlVertex2f(triangleContent.x + triangleContent.w * 0.9f, triangleContent.y + triangleContent.h * 0.9f);
             rlColor3f(0.0f, 0.0f, 1.0f);
-            rlVertex2f(400.0f, 150.0f);
+            rlVertex2f(triangleContent.x + triangleContent.w * 0.5f, triangleContent.y + triangleContent.h * 0.1f);
         rlEnd();
-
-        nk_raylib_render(&ctx, &nullTexture);
+        EndScissorMode();
 
         EndDrawing();
     }
 
-    nk_font_atlas_clear(&atlas);
     nk_free(&ctx);
-    UnloadTexture(fontTexture);
+    if (customFont) UnloadFont(uiFont);
 
     CloseWindow();
     return 0;
