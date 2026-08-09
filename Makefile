@@ -65,6 +65,7 @@ dummy:
 	@echo "You probably want: make build, or make fetch"
 
 fetch:
+	mkdir -p ./vendor
 	curl https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h > ./vendor/miniaudio.h
 	curl https://raw.githubusercontent.com/Immediate-Mode-UI/Nuklear/refs/heads/master/nuklear.h > ./vendor/nuklear.h
 
