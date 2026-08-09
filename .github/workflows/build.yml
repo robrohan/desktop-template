@@ -5,32 +5,24 @@ on:
     branches:
       - main
 
+env:
+  RAYLIB_REF: "5.5"
+
 jobs:
   linux:
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        bits: [64]
-        include:
-        - bits: 64
-          ARCH: "x86_64"
-          ARCH_NAME: "amd64"
-          COMPILER_PATH: "/user/bin"
-          
+    runs-on: ubuntu-22.04
     env:
       APP: example
       PLATFORM: Linux
-    
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@master
-      
+      uses: actions/checkout@v4
+
     - name: Setup Environment
-      run: | 
+      run: |
         sudo apt-get update -qq
         sudo apt-get install gcc-multilib
         sudo apt-get install -y --no-install-recommends \
@@ -47,85 +39,85 @@ jobs:
           libwayland-dev \
           libxkbcommon-dev \
           libgles2-mesa-dev
-      
+
+    - name: Fetch vendor headers (nuklear, miniaudio)
+      run: make fetch
+
+    - name: Fetch raylib
+      run: |
+        git clone --depth 1 --branch ${{ env.RAYLIB_REF }} \
+          https://github.com/raysan5/raylib.git ./vendor/raylib/raylib
+
     - name: Build Raylib
-      run: make libs
-      if: matrix.bits == 64
+      run: |
+        cd ./vendor/raylib/raylib/src
+        make PLATFORM=PLATFORM_DESKTOP
 
     - name: Build Library
-      run: |
-        make build
-      if: matrix.bits == 64
-    
+      run: make build
+
     - name: Generate Artifacts
       run: |
         cd build
         tar -czvf ${{ env.PLATFORM }}.tar.gz ./${{ env.PLATFORM }}
-        
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PLATFORM }}.tar.gz
         path: ./build/${{ env.PLATFORM }}.tar.gz
-        
+
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:
     #     files: ./build/${{ env.PLATFORM }}.tar.gz
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
   darwin:
     permissions:
       contents: write
+    # macos-latest runners are Apple Silicon (arm64); we build native-arch only,
+    # since the Makefile links a single libraylib.a with no per-arch lib paths
     runs-on: macos-latest
-    
+
     env:
       PLATFORM: Darwin
-    
+
     steps:
     - name: Checkout
-      uses: actions/checkout@master
-    
-    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
-    - name: Build Raylib (x86_64)
-      run: |
-        cd ./vendor/raylib/src
-        make PLATFORM=PLATFORM_DESKTOP CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
-        mkdir -p ../../../libs/Darwin/x86_64/
-        cp libraylib.a ../../../libs/Darwin/x86_64/
-        rm -f *.o
+      uses: actions/checkout@v4
 
-    - name: Build Raylib (arm64)
+    - name: Fetch vendor headers (nuklear, miniaudio)
+      run: make fetch
+
+    - name: Fetch raylib
       run: |
-        cd ./vendor/raylib/src
-        make PLATFORM=PLATFORM_DESKTOP CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION"
-        mkdir -p ../../../libs/Darwin/arm64/
-        cp libraylib.a ../../../libs/Darwin/arm64/
+        git clone --depth 1 --branch ${{ env.RAYLIB_REF }} \
+          https://github.com/raysan5/raylib.git ./vendor/raylib/raylib
+
+    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
+    - name: Build Raylib
+      run: |
+        cd ./vendor/raylib/raylib/src
+        make PLATFORM=PLATFORM_DESKTOP CUSTOM_CFLAGS="-DGL_SILENCE_DEPRECATION"
 
     - name: Build Library
       run: |
         clang --version
-
-        make build \
-          CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION" \
-          PLATFORM=${{env.PLATFORM}} CPU=x86_64 EXT=.x86
-
-        make build \
-          CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" \
-          PLATFORM=${{env.PLATFORM}} CPU=arm64 EXT=.arm64
+        make build CUSTOM_CFLAGS="-DGL_SILENCE_DEPRECATION"
 
     - name: Generate Artifacts
       run: |
         cd build
         tar -czvf ${{ env.PLATFORM }}.tar.gz ./${{ env.PLATFORM }}
-        
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PLATFORM }}.tar.gz
         path: ./build/${{ env.PLATFORM }}.tar.gz
-        
+
     # - name: Upload Artifact to Release
     #   uses: softprops/action-gh-release@v1
     #   with:
@@ -155,16 +147,23 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
 
-    # Setup MSBuild.exe path if required
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-      if: matrix.compiler == 'msvc16'
-
-    - name: Build Raylib
-      run: make libs PLATFORM=${{env.PLATFORM}}
+    - name: Fetch vendor headers (nuklear, miniaudio)
       shell: cmd
+      run: make fetch
+
+    - name: Fetch raylib
+      shell: cmd
+      run: |
+        git clone --depth 1 --branch ${{ env.RAYLIB_REF }} https://github.com/raysan5/raylib.git .\vendor\raylib\raylib
+
+    - name: Build Raylib (MinGW-w64 64bit)
+      shell: cmd
+      run: |
+        ${{ matrix.ARCH }}-w64-mingw32-gcc.exe --version
+        cd vendor\raylib\raylib\src
+        make PLATFORM=PLATFORM_DESKTOP
       if: |
         matrix.compiler == 'mingw-w64' &&
         matrix.bits == 64

@@ -16,7 +16,7 @@ STD:=c99
 FILES:=src/main.c
 EXT:=
 
-RAYLIB_INCLUDE:=./vendor/raylib/src
+RAYLIB_INCLUDE:=./vendor/raylib/raylib/src
 RAYLIB_LIB:=./vendor/raylib/raylib/src
 
 # Windows mignw32 needs static
